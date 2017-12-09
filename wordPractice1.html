@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Word Game, 2017</title>
+    <style>
+      body {
+        background-color: #E7F7D4;
+      }
+      table.tableWordList {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid gray;
+      }
+      td.tableWord, th.tableWord {
+        width: 180px;
+        font-size: 13pt;
+        font-weight: bold;
+        text-align: center;
+      }
+      td.tablePronunciation, th.tablePronunciation {
+        width: 200px;
+      }
+      td.tablePronunciation {
+        font-weight: normal;
+        font-size: 11pt;
+        color: #666;
+      }
+      td.tableMemo, th.tableMemo {
+        font-size: 11pt;
+      }
+      td.tableReserved, th.tableReserved {
+        width: 200px;
+      }
+      th {
+        background-color: darkgray;
+      }
+      div.defenceBase {
+        width: 98%;
+        bottom: 0;
+        border: 1px solid darkgray;
+        position: absolute;
+        background-color: #cce0ff;
+        font-size: 15pt;
+        margin: 0px;
+        border-radius: 3px;
+        box-shadow: 3px 3px 3px gray;
+        padding: 5px;
+      }
+      input {
+        font-size: 15pt;
+      }
+      .memo {
+        /*width: 250px;*/
+        padding: 3px;
+        border-radius: 3px;
+        border: 1px solid darkgray;
+        background-color: lightyellow;
+        font-size: 10pt;
+        color: black;
+        position: absolute;
+        z-index: 1;
+        display: none;
+      }
+      .memoTitle {
+        border-bottom: 1px dotted gray;
+        font-weight: bold;
+        color: #0066ff;
+        font-size: 14pt;
+        margin-bottom: 3px;
+        background-color: #cf6;
+        padding: 3px;
+      }
+      .memoBody {
+        font-size: 12pt;
+        line-height: 20px;
+        padding: 3px;
+      }
+      #infoDiv {
+        border: 1px solid darkgray;
+        padding: 5px;
+        height: 40px;
+        border-radius: 3px;
+        box-shadow: 3px 3px 2px darkgray;
+        background-color: #fc6;
+        position: relative;
+      }
+      #appTitle {
+        font-size: 20pt;
+        color: navy;
+        font-weight: bold;
+      }
+      td.numberTitle {
+        font-size: 14pt;
+        width: 120px;
+      }
+      span.numberDisplay {
+        font-size: 16pt;
+        color: blue;
+      }
+      #themeTitle {
+        font-size: 16pt;
+        color: blue;
+      }
+      #collection {
+        /*width: 500px;*/
+        position: realtive;
+        height: 300px;
+        margin-top: 10px;
+        border: 1px solid gray;
+        background-color: #cfc;
+        padding: 10px;
+        overflow: scroll;
+        border-radius: 5px;
+        box-shadow: 3px 3px 2px #999;
+        padding-top: 0px;
+        display: none;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      #collectionTitleArea {
+        padding-top: 10px;
+        background-color: #cfc;
+        position: -webkit-sticky;
+        position: sticky;
+        top: 0;
+        box-shadow: 3px 3px 2px darkgray;
+      }
+      #collectionTitle {
+        position: relative;
+        /*float: left;*/
+        padding-bottom: 5px;
+        padding-left: 10px;
+      }
+      #collectionWords {
+        margin-top: 5px;
+      }
+      div.wordList {
+        width: 120px;
+        padding: 3px;
+        /*position: absolute;*/
+        float: left;
+        border: 1px dotted gray;
+        border-radius: 5px;
+        background-color: #cef;
+      }
+      div.wordList:hover {
+        background-color: #ff9;
+        box-shadow: 3px 3px 3px #0cf;
+        cursor: e-resize;
+      }
+      .wordExposed {
+        color: #093;
+      }
+      .wordMissed {
+        color: #f00;
+      }
+      .wordPaired {
+        color: #00f;
+      }
+      span.pronunciation {
+        font-size: 11pt;
+        color: #222;
+        margin-left: 5px;
+        font-weight: normal;
+      }
+      div.bubbleTip  {
+        border: 1px solid gray;
+        background-color: lightyellow;
+        position: absolute;
+        border-radius: 3px;
+        font-size: 11pt;
+        color: black;
+        padding: 5px;
+        box-shadow: 3px 3px 2px #999;
+      }
+      /* ================ Style for Test =======================*/
+      div.testArea {
+        width: 70%;
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: 10px;
+        display: none;
+      }
+      div.testHead {
+        border: 1px solid gray;
+        border-radius: 10px;
+        padding: 10px;
+        font-size: 20pt;
+        font-family: Arial, Helvetica, sans-serif;
+        background-color: darkgray;
+      }
+      div.testBody {
+        padding-top: 5px;
+      }
+      #testQuestion {
+        border: 1px solid gray;
+        border-top-left-radius: 15px;
+        border-top-right-radius: 15px;
+        padding: 10px;
+        padding-left: 40px;
+        font-size: 30pt;
+        font-family: Arial, Helvetica, sans-serif;
+        color: white;
+        background-color: #333;
+      }
+      #testExampleArea {
+        border: 1px solid gray;
+        border-bottom-right-radius: 15px;
+        border-bottom-left-radius: 15px;
+        padding: 10px;
+        background-color: lightgray;
+      }
+      div.testExample {
+        padding: 10px;
+        font-size: 15pt;
+        margin-top: 5px;
+        margin-bottom: 5px;
+        padding-left: 30px;
+        border-bottom: 1px dotted gray;
+        font-family: Arial, Helvetica, sans-serif;
+      }
+      div.testExample:hover {
+        background-color: #eee;
+      }
+      #testTitle {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 20pt;
+
+      }
+      .movingWord {
+        text-align: center;
+        padding: 5px;
+        padding-top: 7px;
+        font-size: 14pt;
+        border: 1px dotted blue;
+        background-color: lightblue;
+        position: absolute;
+        border-radius: 3px;
+        box-shadow: 3px 3px 2px #999;
+        font-weight: bold;
+      }
+      /* ================ Style for Test =======================*/
+
+    </style>
+
+    <script src="jquery-3.2.1.min.js"></script>
+    <script src="underscore-min.js"></script>
+    <script src="wordBook4.js"></script>
+    <script>
+      //##########################################################################
+      //Add "toNumber" method to String,   for "345px" => 345
+      String.prototype.toNumber = function() {return parseInt(this);};
+      //##########################################################################
+      // Style Object
+      //--------------------------------------------------------------------------
+      //##########################################################################
+      //---------------------------------------------------------------
+      let wordBOOK = new Collection();  //Master Word Book
+      let wordKilled = new Collection("Words Catched");
+      let wordSource = new Collection("Words Waiting");
+      let wordBase = new Collection("Moving Words", "move", wordSource);
+      let wordMissed = new Collection("Words Missed");
+      let myWordBook = new Collection("My Word Book");
+
+      let gameConfig = {};
+      gameConfig.boxWidth = 150;
+      gameConfig.clockSpeed = 1000;
+      gameConfig.clockSpeedMinimum = 300;
+      gameConfig.fetchSpeed = 5000;
+      gameConfig.handleWordMoving = null;
+      gameConfig.handleFetching = null;
+      gameConfig.hitColor = "#ffdddd";
+      gameConfig.notHitColor = "lightblue";
+      gameConfig.defenceBaseTop = window.innerHeight;
+      gameConfig.downSpeed = {min: 15, max: 30};
+      gameConfig.startTop = 50;
+      gameConfig.warnningDistance = 255;
+      gameConfig.showCollectionBody = null;
+      gameConfig.showCollectionTitle = null;
+      gameConfig.showCollectionList = null;
+      gameConfig.collectionViewStyle = "WordList";  // "WordList", "WordBook"
+      gameConfig.currentViewCollection = null;
+      gameConfig.currentTest = null;
+      gameConfig.currentProblem = null;
+      gameConfig.testInterval = 3500;  // in case of wrong selection
+      gameConfig.correctInterval = 1500;  // in case of right selection
+      gameConfig.numberOfWrongExamples = 3;
+      gameConfig.status = "wait"; //one of wait|test|game|view
+      gameConfig.colorExposed = "#093";
+      gameConfig.handleMemoShow = null;
+      gameConfig.showMemo = false;
+
+      //===============================================================
+      // Word Object(div element) 생성자
+      //---------------------------------------------------------------
+      function Word(titleWord, memo='', pronunciation='') {
+        this.word = titleWord;
+        this.pronunciation = pronunciation;
+        this.memo = memo;
+        this.countExposed = 0;
+        this.countMissed = 0;
+        this.countPaired = 0;
+        this.downSpeed = Math.floor(Math.random()*(gameConfig.downSpeed.max-gameConfig.downSpeed.min) + gameConfig.downSpeed.min);
+        // this.div = document.createElement('div');
+        // this.div.appendChild(document.createTextNode(`<b>${this.word}</b>`));
+        // this.div.innerHTML = this.word;
+        // document.body.appendChild(this.div);
+        this.div = $(`<div>${this.word}</div>`).addClass("movingWord");
+        $(this.div).appendTo("body");
+        // $(this.div).addClass("movingWord");
+        this.moveToStart();
+        this.hide();
+      }
+      Word.prototype.get = function(propertyName) {
+        return this[propertyName];
+      }
+      Word.prototype.exposed = function(c) { //현재 값이 필요하면 c에 true 입력
+        return (c)? this.countExposed : ++this.countExposed;
+      }
+      Word.prototype.missed = function(c) { //현재 값이 필요하면 c에 true 입력
+        return (c)? this.countMissed : ++this.countMissed;
+      }
+      Word.prototype.paired = function(c) {  //현재 값이 필요하면 c에 true 입력
+        return (c)? this.countPaired : ++this.countPaired;
+      }
+      Word.prototype.moveToStart = function(defaultTop=gameConfig.startTop) {
+        let x = Math.floor(Math.random()*(window.innerWidth-gameConfig.boxWidth));
+        this.moveTo(x, defaultTop);
+      }
+      Word.prototype.moveDown = function(targetValue = gameConfig.defenceBaseTop) {  // return targetValue - new top value
+        let newTop = $(this.div).css("top").toNumber() + this.downSpeed;
+        $(this.div).css("top", `${newTop}px`);
+      }
+      Word.prototype.isCritical = function() {
+        let distance = this.distanceToBottom();
+        if(distance < gameConfig.warnningDistance)
+          $(this.div).css("backgroundColor", `rgb(255, ${distance}, ${distance})`);
+        return distance;
+      }
+      Word.prototype.moveTo = function(x, y) {
+        x = (String(x).search("px") < 0) ? x + "px" : x;
+        y = (String(y).search("px") < 0) ? y + "px" : y;
+        $(this.div).css({"left": x, "top": y});
+      }
+      Word.prototype.hide = function() {
+        $(this.div).hide();
+      }
+      Word.prototype.show = function() {
+        // $(this.div).css("backgroundColor", "lightblue");
+        $(this.div).slideDown('fast');
+      }
+      Word.prototype.hit = function() {
+        $(this.div).css('backgroundColor', gameConfig.hitColor);
+        $(this.div).fadeOut("fast");
+      }
+      Word.prototype.showMemo = function(shower=memoShow, hider=memoHide, duration=2500) {
+        clearTimeout(gameConfig.handleMemoShow);
+        shower(this);
+        gameConfig.handleMemoShow = setTimeout(function(){hider(this)}, duration);
+      }
+      Word.prototype.mark = function(substr, color) {
+        if(substr.trim().length > 0) {
+          $(this.div).html(this.word.replace(substr,`<span style="color:${color};">${substr}</span>`));
+        } else {
+          $(this.div).html(this.word);
+        }
+      }
+      Word.prototype.distanceToBottom = function(targetValue = gameConfig.defenceBaseTop) {
+        return targetValue - ($(this.div).css("top").toNumber() + $(this.div)[0].offsetHeight);
+      }
+      //===============================================================
+      function Collection(title = "Word Collection", style = "store", sourceCollection) {
+        this.title = title;
+        this.words = [];
+        this.wordCountShowList = [];
+        this.currentMark = "";
+        this.currentMarkColor = null;
+        this.handleMoving = null;
+        this.handleFetching = null;
+        this.style = style;  // one of "move", "store"
+        this.targetToFetchOut = null;
+        this.targetForMissed = null;  //Word.isCritical() < 0인 경우 보낼 colleciton
+        this.sourceCollection = sourceCollection;
+
+      }
+      Collection.prototype.markMovingWords = function(substr, color="red") {
+        this.currentMark = substr;
+        this.currentMarkColor = color;
+        for(let word of this.words)
+          word.mark(this.currentMark, this.currentMarkColor);
+      }
+      Collection.prototype.setWordsExposed = function() {
+        for(let word of this.words)
+          word.exposed();
+      }
+      Collection.prototype.showLengthWith = function(element) {
+        this.wordCountShowList.push(element);
+      }
+      Collection.prototype.showLength = function() {
+        if(this.wordCountShowList.length > 0)
+          for(let e of this.wordCountShowList)
+            e.innerHTML = this.words.length;
+      }
+      Collection.prototype.isCurrentViewCollection = function() {
+        gameConfig.currentViewCollection = this;
+        themeTitleFrom(this);
+      }
+      Collection.prototype.targetForMissedIs = function(collection) {
+        this.targetForMissed = collection;
+      }
+      Collection.prototype.targetToFetchOutIs = function(collection) {
+        this.targetToFetchOut = collection;
+      }
+      Collection.prototype.fetchOutToDefault = function() {
+        if(this.targetToFetchOut) {
+          let word = this.popRandom();
+          if(word)
+            this.targetToFetchOut.push(word);
+        }
+      }
+      Collection.prototype.selectedLength = function(selector) {
+        return _.filter(this.words, (word)=>{return word.word.startsWith(selector)}).length;
+      }
+      Collection.prototype.searchAndCopyTo = function(selector, targetCollection) {
+        let selectedWords = _.filter(this.words, (word)=>{return word.word.startsWith(selector);})
+        for(let aWord of selectedWords)
+          targetCollection.push(aWord);
+      }
+      Collection.prototype.randomSelectAndCopyTo = function(count, targetCollection) {
+        if(count > this.words.length)
+          count = this.words.length;
+        let randomIndexToPick = randomSequence(this.words.length, count);
+        for(let i in randomIndexToPick)
+          targetCollection.push(this.words[randomIndexToPick[i]]);
+      }
+      Collection.prototype.startFetching = function() {
+        this.fetchOutToDefault();
+        this.handleFetching = setInterval(this.fetchOutToDefault.bind(this), gameConfig.fetchSpeed);
+      }
+      Collection.prototype.stopFetching = function() {
+        clearInterval(this.handleFetching);
+        this.handleFetching = null;
+      }
+      Collection.prototype.findAndFetchToDefault = function(str) {
+        if(this.targetToFetchOut) {
+          for(let i in this.words) {
+            if(this.words[i].word == str) {
+              let word = this.words.splice(i,1)[0];
+              this.showLength();
+              this.targetToFetchOut.pickUp(word);
+              if(gameConfig.showMemo)
+                word.showMemo();
+              // setTimeout(this.startMoving.bind(this), 2000);
+              // setTimeout(this.showAll.bind(this), 2000);
+              return;
+            }
+          }
+        }
+      }
+      Collection.prototype.pickUp = function(aWord) {
+        if(aWord) { //aWord가 null이 아닌 경우에만 처리
+          this.words.push(aWord);
+          this.showLength();
+          aWord.hit();
+          //Memo 기능 처리 코드
+          // memoShow(aWord);
+          // setTimeout(function(){memoHide(aWord)}, 1500);
+        }
+      }
+      Collection.prototype.push = function(aWord) {
+        if(aWord) { //aWord가 null이 아닌 경우에만 처리
+          this.words.push(aWord);
+          this.showLength();
+          if(this.style == "move") {
+            $(aWord.div).css("backgroundColor", gameConfig.notHitColor);
+            aWord.moveToStart();
+            aWord.show();
+            aWord.mark(this.currentMark, this.currentMarkColor);
+          }
+          else
+            aWord.hide();
+        }
+      }
+      Collection.prototype.styleIs = function(style) {
+        if(style == "move") {
+          this.style = style;
+          this.showAll();
+        } else {
+          this.style = "store";
+          this.hideAll();
+        }
+      }
+      Collection.prototype.setTitle = function(newTitle) {
+        this.title = newTitle;
+      }
+      Collection.prototype.getTitle = function() {
+        return this.title;
+      }
+      Collection.prototype.shift = function() {
+        let word = this.words.shift();
+        this.showLength();
+        return word;
+      }
+      Collection.prototype.popRandom = function() {
+        if(this.words.length) {
+          let picker = Math.floor(this.words.length * Math.random());
+          let word = this.words.splice(picker, 1)[0];
+          this.showLength();
+          return word;
+        } else {
+          return null;
+        }
+      }
+      Collection.prototype.length = function() {
+        return (this.words == null)? 0 : this.words.length;
+      }
+      Collection.prototype.makeWordsFromString = function(str) {
+        let words = str.split(",");
+        for(let word of words) {
+          if(word.trim().length > 0) {
+            this.push(new Word(word));
+            this.showLength();
+          }
+        }
+      }
+      Collection.prototype.makeWordsFromWordBook = function(wb) {
+        let wordArray = wb.words;
+        this.title = wb.title;
+        for(let word of wordArray) {
+          if(word.hasOwnProperty("pronunciation"))
+            this.push(new Word(word.word, word.memo, word.pronunciation.trim()));
+          else
+            this.push(new Word(word.word, word.memo));
+          this.showLength();
+        }
+      }
+      Collection.prototype.showAll = function() {
+        for(let word of this.words)
+          word.show();
+      }
+      Collection.prototype.hideAll = function() {
+        for(let word of this.words)
+          word.hide();
+      }
+      Collection.prototype.stringHeader = function(targetElement) {
+        let header =  `<span>Title: [<b>${this.title}</b>] &nbsp;&nbsp;<span style="font-size:12pt">(<span class="numberDisplay">${this.words.length}</span>) words.</span></span>`;
+        targetElement.innerHTML = header;
+      }
+      Collection.prototype.attachWords = function(targetElement) {
+        let wordList = "";
+        targetElement.innerHTML = "";
+        for(let word of this.words) {
+          if(word.paired(true)) {
+            let k = $(`<div>${word.word}</div>`);
+            k.addClass("wordList wordPaired").appendTo(targetElement);
+          } else if (word.missed(true)) {
+            let k = $(`<div>${word.word}</div>`);
+            k.addClass("wordList wordMissed").appendTo(targetElement);
+          } else if(word.exposed(true)){
+            let k = $(`<div>${word.word}</div>`);
+            k.addClass("wordList wordExposed").appendTo(targetElement);
+          } else {
+            let k = $(`<div>${word.word}</div>`);
+            k.addClass("wordList").appendTo(targetElement);
+          }
+        }
+        // targetElement.innerHTML = wordList;
+        $("div.wordList").click(function() {wordListTipShow(this);});
+        $("div.wordList").mouseout(function() {wordListTipHide(this);});
+
+      }
+      Collection.prototype.attachWordsTable = function(targetElement) {
+        let wordTable = "<table class='tableWordList'><thead><th class='tableWord'>Word</th><th class='tablePronunciation'>Pronunciation</th><th class='tableMemo'>Memo</th><th class='tableReserved'>Reserved</th></thead><tbody>";
+        for(let  word of this.words) {
+          if (word.missed(true)) {
+            wordTable += `<tr class='tableWordRow'><td class='tableWord wordMissed';">${word.word}</td><td class='tablePronunciation'>[${word.pronunciation}]</td><td class='tableMemo'>${word.memo}</td><td class"tableReserved"> </td></tr>`;
+          } else if (word.paired(true)) {
+            wordTable += `<tr class='tableWordRow'><td class='tableWord wordPaired';">${word.word}</td><td class='tablePronunciation'>[${word.pronunciation}]</td><td class='tableMemo'>${word.memo}</td><td class"tableReserved"> </td></tr>`;
+          } else if(word.exposed(true)) {
+            wordTable += `<tr class='tableWordRow'><td class='tableWord wordExposed';">${word.word}</td><td class='tablePronunciation'>[${word.pronunciation}]</td><td class='tableMemo'>${word.memo}</td><td class"tableReserved"> </td></tr>`;
+          } else {
+            wordTable += `<tr word='${word.word}' onclick='exposeThisRow(this);' class='tableWordRow'><td class='tableWord'>${word.word}</td><td class='tablePronunciation'>[${word.pronunciation}]</td><td class='tableMemo'>?</td><td class"tableReserved"> </td></tr>`;
+          }
+        }
+        wordTable += "</tbody> </table>";
+        targetElement.innerHTML = wordTable;
+        $("tr.tableWordRow:odd").css("backgroundColor", "#dff");
+      }
+      Collection.prototype.showListOfWords = function(showType = gameConfig.collectionViewStyle) {
+        if(this.words.length) {
+          this.sortByWords();
+          this.stringHeader(gameConfig.showCollectionTitle);
+          if(showType == "WordList") {
+            gameConfig.collectionViewStyle = showType;
+            this.attachWords(gameConfig.showCollectionList);
+          }
+          else {
+            gameConfig.collectionViewStyle = showType;
+            this.attachWordsTable(gameConfig.showCollectionList);
+          }
+          $(gameConfig.showCollectionBody).show();
+        } else {
+          $(gameConfig.showCollectionBody).hide();
+        }
+      }
+      Collection.prototype.fetchOutToMissed = function(aWord) {
+        let index = -1;
+        if(this.words.length) {
+          for(index = 0; index < this.words.length; index++) {
+            if(this.words[index].word == aWord.word) {
+              aWard = this.words.splice(index,1)[0];
+              this.showLength();
+              this.targetForMissed.push(aWord);
+              return;
+            }
+          }
+        }
+      }
+      Collection.prototype.moveWords = function() {
+        if(this.length() <= 0 && this.sourceCollection.length() <= 0) {
+          gameControl("finished");
+          return;
+        }
+        let missed = [];
+        if(this.style == "move") {
+          for(let word of this.words) {
+            word.moveDown();
+            if(word.isCritical() < 0) {
+              missed.push(word);
+            }
+          } // end of for
+          // missed word가 발생했다면
+          if(missed.length > 0) {
+            for(let aWord of missed) {
+              this.fetchOutToMissed(aWord);
+            }
+          }
+        }// end of outer if
+      }// end of function
+      Collection.prototype.startMoving = function() {
+        if(this.style == "move")
+          this.handleMoving = setInterval(this.moveWords.bind(this), gameConfig.clockSpeed);
+      }
+      Collection.prototype.stopMoving = function() {
+        if(this.style == "move") {
+          clearInterval(this.handleMoving);
+          this.handleMoving = null;
+        }
+      }
+      Collection.prototype.findWord = function(str) {
+        for(let i in this.words) {
+          if(this.words[i].word == str)
+            return this.words[i];
+        }
+        return null;
+      }
+      Collection.prototype.findWordAndGetMemo = function(str) {
+        let word = this.findWord(str);
+        return (word)? word.memo : '';
+      }
+      Collection.prototype.findAndPick = function(strWord) {
+        for(let i in this.words) {
+          if(this.words[i].word == strWord) {
+            let word = this.words.splice(i, 1)[0];
+            this.showLength();
+            return word;
+          }
+        }
+        return null;
+      }
+      Collection.prototype.clearWords = function() {
+        this.hideAll();
+        this.words = [];
+        this.showLength();
+      }
+      Collection.prototype.sortByWords = function() {
+        this.words.sort(function(a, b) { if(a.word > b.word) return 1; else if(a.word === b.word) return 0; else return -1;});
+      }
+      //===============================================================
+      function Problem(index, collection) {
+        // check initial condition
+        if(collection == null || collection.length() <= 0 || index >= collection.length()) {
+          console.log(`Error: Problem(): Not valid condition to make a problem.`);
+          alert(`Error: Problem(): Not valid condition to make a problem.`);
+          return;
+        }
+        //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        let wrongExamples = (collection.length() < (gameConfig.numberOfWrongExamples+1))? collection.length() - 1: gameConfig.numberOfWrongExamples;
+        this.key = collection.words[index];
+        this.words = [];
+        this.words.push(this.key);
+        this.index = [];
+        this.index.push(index);
+        this.timeStarted = null;
+        this.timeInterval = null;
+        this.wasHit = false;      //will be changed to 'true' on choosing correct answer
+        this.wrongAnswer = null;
+        let randomWordIndex = randomSequence(collection.length(), wrongExamples, index);
+        for(let i=0; i<randomWordIndex.length; i++) {
+          this.words.push(collection.words[randomWordIndex[i]]);
+          this.index.push(randomWordIndex[i]);
+        }
+        this.collection = collection;
+        this.test = null;
+      }
+      //===============================================================
+      function Test(collection, count=collection.length(), type="word") {
+        this.type = type;
+        this.timeLimit = 0;  // 0: no time limit.  (unit: seconds)
+        this.collection = collection;
+        if(count > collection.length())
+          count = collection.length();
+        this.problemIndexArray = randomSequence(collection.length(), count);
+        this.problems = [];
+        this.currentProblem = null;
+        this.currentIndex = -1;
+        for(let i=0; i<count; i++) {
+          let newProblem = new Problem(this.problemIndexArray[i], collection);
+          this.problems.push(newProblem);
+          newProblem.test = this;
+        }
+        this.dateCreated = (new Date()).toString();
+      }
+      Test.prototype.length = function() {
+        return this.problems.length;
+      }
+      Test.prototype.typeIs = function(type) {
+        this.type = type;
+      }
+      Test.prototype.startTest = function(type) {
+        gameConfig.status = "test";
+        if(type)
+          this.type = type;
+        $("#currentTurn").html(1);
+        $("#totalProblems").html(this.length());
+        this.showNextProblem();
+        $("div.testArea").slideDown(1000);
+      }
+      Test.prototype.finishTest = function() {
+        $("div.testArea").fadeOut(1000);
+        $("#keyInput").focus();
+        gameConfig.currentTest = null;
+        gameConfig.status = "wait";
+      }
+      Test.prototype.suspendTest = function() {
+        //문제를 푸는 중에 중단하였으므로 진행 중이던 문제부터 다음에 풀 수 있도록 인덱스 조정
+        this.currentProblem = this.problems[--this.currentIndex];
+        $("div.testArea").fadeOut(1000);
+        $("#keyInput").focus();
+        gameConfig.status = "wait";
+      }
+      Test.prototype.showAProblem = function(problemIndex) {
+        this.currentProblem = this.problems[problemIndex];
+        this.currentIndex = problemIndex;
+        let problem = this.currentProblem;
+        $("#currentTurn").html(this.current()+1);
+
+        if(this.type === "word") {
+          $("#testQuestion").html(`${problem.key.word}&nbsp;&nbsp; <span style="font-size:15pt;color:lightgray;">[ ${problem.key.pronunciation} ]</span>`);
+        }
+        else {
+          $("#testQuestion").html(`${problem.key.memo}`);
+        }
+
+        let dispOrder = randomSequence(problem.words.length);
+        removeAllChildNodes($("#testExampleArea")[0]);
+        for(let i=0; i<dispOrder.length; i++) {
+          if(this.type === "word")
+            $(`<div  wordindex="${dispOrder[i]}" word="${problem.words[dispOrder[i]].word}" class="testExample">${problem.words[dispOrder[i]].memo}</div>`).appendTo("#testExampleArea");
+          else
+            $(`<div  wordindex="${dispOrder[i]}" word="${problem.words[dispOrder[i]].word}" class="testExample"><span style="font-size:20pt;">${problem.words[dispOrder[i]].word}</span></div>`).appendTo("#testExampleArea");
+        }
+        $("div.testExample").bind("click", function(){checkThisSelection(this);});
+        this.currentProblem.timeStarted = new Date();
+      }
+      Test.prototype.current = function(type="index") {  //or "problem" for object
+        return (type === "index")? this.currentIndex : this.currentProblem;
+      }
+      Test.prototype.isLeft = function() {
+        return this.length() - this.current() - 1;
+      }
+      Test.prototype.showNextProblem = function() {
+        if(this.isLeft()) {
+          this.showAProblem(this.current()+1);
+          return true;
+        } else {
+          this.finishTest();
+          return false;
+        }
+      }
+      //===============================================================
+      function gameControl(mode) {
+        if(mode === "go") {
+          wordSource.startFetching();
+          wordBase.startMoving();
+        } else if(mode === "stop") {
+          wordSource.stopFetching();
+          wordBase.stopMoving();
+        } else if (mode === "stop&go") {
+          wordSource.stopFetching();
+          wordBase.stopMoving();
+          wordSource.startFetching();
+          wordBase.startMoving();
+        } else if(mode === "finished") {
+          wordSource.stopFetching();
+          wordBase.stopMoving();
+          gameConfig.status = "wait";
+        }
+      }
+      function checkThisSelection(element) {
+        let choice = Number($(element).attr("wordindex"));
+        let ct = gameConfig.currentTest;
+        let cp = ct.currentProblem;
+        let timeFinished = new Date();
+        cp.timeInterval = Math.round((timeFinished.getTime() - cp.timeStarted.getTime())/1000);
+        cp.words[choice].exposed();
+        if(choice) {  // if selected wroing number
+          cp.words[choice].missed();
+          cp.wrongAnswer = choice;
+          $(element).css("backgroundColor", "#fdd");
+          if(ct.type === "word")
+            $(element).prepend(`<span style="font-weight:bold;font-size:20pt;color:red;">${cp.words[choice].word}</span> <span class="pronunciation" style="font-size:15pt;color:#777;">[ ${cp.words[choice].pronunciation} ]</span>: `);
+          else {
+            $(element).html(`<span style="font-weight:bold;font-size:20pt;color:red;">${cp.words[choice].word}</span> <span class="pronunciation" style="font-size:15pt;color:#777;">[ ${cp.words[choice].pronunciation} ]</span>: ${cp.words[choice].memo}`);
+          }
+        } else { // selected the correct answer
+          cp.words[choice].paired();
+          cp.wasHit = true;
+          $(element).css("backgroundColor", "#ddf");
+          if(ct.type === "word")
+            $(element).prepend(`<span style="font-weight:bold;font-size:20pt;color:blue;">${cp.words[choice].word}</span> <span class="pronunciation" style="font-size:15pt;color:#777;">[ ${cp.words[choice].pronunciation} ]</span>: `);
+          else {
+            $(element).html(`<span style="font-weight:bold;font-size:20pt;color:blue;">${cp.words[choice].word}</span> <span class="pronunciation" style="font-size:15pt;color:#777;">[ ${cp.words[choice].pronunciation} ]</span>: ${cp.words[choice].memo}`);
+          }
+        }
+        $("#testQuestion").append(`&nbsp;&nbsp;<span style="font-size:12pt;color:#aaa;">${cp.timeInterval} secs.</span>`);
+        $("div.testExample").unbind("click");
+        // alert($(element).attr("word")+","+$(element).attr("wordindex"));
+        let interval = (choice)? gameConfig.testInterval: gameConfig.correctInterval;
+        setTimeout(function(){gameConfig.currentTest.showNextProblem();}, interval);
+      }
+      //===============================================================
+      function showListOfWords(collection = gameConfig.currentViewCollection) {
+        if(gameConfig.status === "test" || gameConfig.status === "game")
+          return;
+        if(collection === undefined || collection === null) //지정된 collection이 없으면
+          return; // 어떤 처리도 하지 않고 리턴.
+        //collection이 결정되어 있거나(gameConfig.currentViewCollection) 매개변수로 전달되었으면(collection)
+        //gameConfig.currentViewCollection에 세팅부터 한다.
+        gameConfig.currentViewCollection = collection;
+        //이후에 필요한 처리를 한다.
+        gameConfig.currentViewCollection.showListOfWords(gameConfig.collectionViewStyle);
+        gameConfig.status = "view";
+      }
+      function hideListOfWords() {
+        gameConfig.status = "wait";
+        $("#collection").fadeOut(200);
+        $("#keyInput").focus();
+      }
+      function collectionViewStyleIs(style = "WordList") {
+        gameConfig.collectionViewStyle = style;
+        showListOfWords();
+      }
+      //===============================================================
+      function wordListTipHide(div) {
+        // $(div).css({"cursor": "auto"});
+        $("#wordListTip").hide();
+      }
+      function wordListTipShow(div) {
+        let word = wordBOOK.findWord(div.innerHTML.trim());
+        if(word) {
+          word.exposed();
+          $(div).addClass("wordExposed");
+          // $(div).css({"cursor": "e-resize"});
+          let divp = $(div).position();
+          let tip = `<span style="font-size:13pt;color:blue;font-weight:bold;">${word.word}</span>`;
+          tip += `&nbsp;<span class="pronunciation">[${word.pronunciation}]</span><hr />${word.memo}`;
+          $("#wordListTip").html(tip);
+
+          let tipWidth = $("#wordListTip").outerWidth(true);
+          if((divp.left+tipWidth) > window.innerWidth){
+            divp.left = (window.innerWidth-tipWidth-10);
+          }
+
+          $("#wordListTip").css({"left": divp.left+"px", "top": (divp.top-$("#wordListTip").outerHeight(true)-4)+"px"});
+          $("#wordListTip").show();
+        }
+      }
+      //===============================================================
+      function memoHide() {
+        $(".memo").fadeOut(200);
+        gameConfig.handleMemoShow = null;
+      }
+      function memoShow(word) {
+        if(gameConfig.showMemo)
+          word.exposed();
+        let x = $(word.div).css("left");
+        let y = $(word.div).css("top");
+        $(".memoTitle").html(word.word + `<span class="pronunciation">[${word.pronunciation}]</span>`);
+        $(".memoBody").html(word.memo);
+        let memoWidth = $(".memo").outerWidth(true);
+        if((x.toNumber()+memoWidth) > window.innerWidth)
+          x = (window.innerWidth-memoWidth-5)+"px";
+        $(".memo").css({"left": x, "top": y}).fadeIn(100);
+
+      }
+      function clearGameCollections() {
+        wordSource.clearWords();
+        wordBase.clearWords();
+        wordKilled.clearWords();
+        wordMissed.clearWords();
+      }
+      function exposeThisRow(targetTR) {
+        let titleWord = $(targetTR).attr("word");
+        let word = wordBOOK.findWord(titleWord);
+        let memoTD = targetTR.childNodes[2];
+        word.exposed();
+        $(memoTD).html(word.memo);
+        $(targetTR.childNodes[0]).addClass("wordExposed");
+      }
+      //===============================================================
+      function commandControl(cmd) {
+        //빈 칸으로 split 후 빈칸만으로 된 요소는 제거함.
+        let cmds = _.map(cmd.split(" "), (x)=>{return x.trim();}).filter((x)=>{return x.length;});
+        switch(cmds[0]) {
+          case "m": case "memo":
+                      gameConfig.showMemo = (gameConfig.showMemo)? false:true;
+                      break;
+          case "slow":
+                      gameSpeed("slower");
+                      break;
+          case "fast":
+                      gameSpeed("faster");
+                      break;
+
+          case "q": case "ㅂ": case "quit":
+                      if(gameConfig.status === "test") {
+                        gameConfig.currentTest.suspendTest();
+                      } else if(gameConfig.status === "game") {
+                        // wordKilled.searchAndCopyTo("", wordSource);
+                        // wordKilled.clearWords();
+                        // wordMissed.searchAndCopyTo("", wordSource);
+                        // wordMissed.clearWords();
+                        // wordBase.searchAndCopyTo("", wordSource);
+                        // wordBase.clearWords();
+                        wordBase.markMovingWords("");
+                        gameControl("stop");
+                        wordBase.hideAll();
+                        $("#collection").fadeOut(200);
+                        gameConfig.status = "wait";
+                      }
+                      break;
+          case "d": case "ㅇ": case "drop":
+                      hideListOfWords();
+                      clearGameCollections();
+                      wordBOOK.isCurrentViewCollection();
+                      gameConfig.currentTest.finishTest();
+                      gameConfig.status = "wait";
+                      break;
+          case "h": case "ㅗ": case "hide":
+                      hideListOfWords();
+                      break;
+          case "v": case "ㅍ": case "view":
+                      if(gameConfig.status === "wait") {
+                        wordKilled.searchAndCopyTo("", wordSource);
+                        wordKilled.clearWords();
+                        wordMissed.searchAndCopyTo("", wordSource);
+                        wordMissed.clearWords();
+                        showListOfWords();
+                      } else if(gameConfig.status === "view") {
+                        hideListOfWords();
+                      }
+                      break;
+          case "t": case "ㅅ": case "test":
+                      if(gameConfig.status === "wait") {
+                        if(cmds.length > 1)
+                          gameConfig.currentTest.startTest(cmds[1]);
+                        else
+                          gameConfig.currentTest.startTest();
+                      }
+                      break;
+          case "s": case "ㄴ": case "stop":
+                      // if(gameConfig.status === "game") {
+                        gameControl("stop");
+                      // }
+                      break;
+          case "g": case "ㅎ": case "go":
+                      if(gameConfig.status === "game" || gameConfig.status === "wait") {
+                        gameControl("go");
+                        wordBase.showAll();
+                        $("#collection").fadeOut(200);
+                        gameConfig.status = "game";
+                      }
+                      break;
+          case "play again": case "pa":
+                      if(gameConfig.status === "game" || gameConfig.status === "wait") {
+                        wordKilled.searchAndCopyTo("", wordSource);
+                        wordKilled.clearWords();
+                        wordMissed.searchAndCopyTo("", wordSource);
+                        wordMissed.clearWords();
+                        wordBase.searchAndCopyTo("", wordSource);
+                        wordBase.clearWords();
+                        $("#collection").fadeOut(200);
+                        gameConfig.status = "wait";
+                      }
+                      break;
+          case "p": case "ㅔ": case "pick":
+                      if(gameConfig.status === "wait") {
+                        let sel = '';
+                        if(cmds.length < 2) {
+                          sel = prompt("검색할 단어의 시작 문자열을 입력해 주세요. (빈 칸은 모두 선택입니다.)");
+                        } else {
+                          sel = cmds[1];
+                        }
+                        if(sel.startsWith('~')) {
+                          let count = 20;
+                          if(cmds.length > 2)
+                            count = cmds[2].toNumber();
+                          clearGameCollections()
+                          wordBOOK.randomSelectAndCopyTo(count, wordSource);
+                          let nt = `[${wordBOOK.getTitle()}]에서 임의로 뽑은 ${count}개 단어장`;
+                          wordSource.setTitle(nt);
+                          themeTitleFrom(wordSource);
+                          wordSource.isCurrentViewCollection();
+                          gameConfig.currentTest = new Test(wordSource);
+                          gameConfig.currentTest.typeIs("word");
+                        } else {
+                          let numberOfSelected = wordBOOK.selectedLength(sel);
+                          if(confirm(`[${numberOfSelected}]개의 단어가 검색되었습니다. 검색 결과로 시작할까요?`)) {
+                            clearGameCollections()
+                            wordBOOK.searchAndCopyTo(sel, wordSource);
+                            let nt = "";
+                            if(sel === "")
+                              nt = `[${wordBOOK.getTitle()}] ${wordSource.length()}개 모두 선택한 단어장`;
+                            else
+                              nt = `[${wordBOOK.getTitle()}]에서 "${sel}"로 시작하는 ${wordSource.length()}개 단어장`;
+                            wordSource.setTitle(nt);
+                            themeTitleFrom(wordSource);
+                            wordSource.isCurrentViewCollection();
+                            gameConfig.currentTest = new Test(wordSource);
+                            gameConfig.currentTest.typeIs("memo");
+                          }
+                        }
+                      }
+                      break;
+        }
+      }
+      //length개(0~length-1) 중 임의로 count개만큼 선택하여 배열로 리턴.
+      function randomSequence(length, count=length, except=-1) {
+        let sourceIndexArray = [];
+        let randomIndexArray = [];
+        count = (count > length)? length : count;
+        for(let i=0; i<length; i++)
+          sourceIndexArray.push(i);
+        if(except < 0) {
+          for(let i=0; i<count; i++)
+            randomIndexArray.push(sourceIndexArray.splice(Math.floor(Math.random()*sourceIndexArray.length),1)[0]);
+        } else {
+          sourceIndexArray.splice(except, 1);  // remove item[except]
+          count = (count >= length)? length-1 : count;
+          for(let i=0; i<count; i++)
+            randomIndexArray.push(sourceIndexArray.splice(Math.floor(Math.random()*sourceIndexArray.length),1)[0]);
+        }
+        return randomIndexArray;
+
+      }
+      //===============================================================
+      function gameSpeed(value, element) {
+        if(value === undefined) {
+          return gameConfig.clockSpeed;
+        } else if(value === "slower") {
+            gameConfig.clockSpeed += 200;
+            gameControl("stop&go");
+        } else if(value === "faster") {
+            gameConfig.clockSpeed -= 200;
+            gameConfig.clockSpeed = (gameConfig.clockSpeed < gameConfig.clockSpeedMinimum)? gameConfig.clockSpeedMinimum: gameConfig.clockSpeed;
+            gameControl("stop&go");
+        } else if(value === "default") {
+            gameConfig.clockSpeed = 1000;
+            gameControl("stop&go");
+        } else {
+          if(value >= gameConfig.clockSpeedMinimum)
+            gameConfig.clockSpeed = value;
+            gameControl("stop&go");
+        }
+      }
+      function inputControl() {
+        let input = document.getElementById('keyInput');
+        let value = input.value.trim();
+        if(event.keyCode == 32) {
+          if(value[0] == '/')
+            return;
+        }
+        if(event.keyCode == 13 || event.keyCode == 32) {
+          input.value = "";
+          if(value.length > 0) {
+            if(value.charAt(0) == '/')
+              commandControl(value.substr(1).toLowerCase());
+            else
+              wordBase.findAndFetchToDefault(value);
+          }
+        } else {
+          if(gameConfig.status === "game")
+            wordBase.markMovingWords(value);
+        }
+      }
+      function setShowCollection(body, title, list) {
+        gameConfig.showCollectionBody = body;
+        gameConfig.showCollectionTitle = title;
+        gameConfig.showCollectionList = list;
+      }
+      function _id(id) {
+        return document.getElementById(id);
+      }
+      //===============================================================
+      function removeAllChildNodes(node) {
+        while(node.hasChildNodes()) {
+          node.removeChild(node.firstChild);
+        }
+      }
+      //===============================================================
+      function themeTitleFrom(collection) {
+        $("#themeTitle").html(collection.title);
+      }
+      //#######################################################################
+      $(document).ready(function(){
+        gameConfig.startTop = $("#infoDiv").css("top").toNumber() + $("#infoDiv").outerHeight(true)+15;
+        setShowCollection(_id("collection"), _id("collectionTitle"), _id("collectionWords"));
+        $(".memo").hide();
+
+        gameConfig.defenceBaseTop = $(".defenceBase").css("top").toNumber();
+
+        $("#keyInput").keyup(inputControl);
+        $("#keyInput").focus();
+        //----------------------------------------------------------------
+        // wordSource.makeWordsFromString("DIT,Korea,USA,Japan,Hello");
+        let wordBook = wordBook_2017_004; // <== from included js word book file.
+        wordBOOK.makeWordsFromWordBook(wordBook);
+        wordBOOK.isCurrentViewCollection();
+        themeTitleFrom(wordBOOK);
+        //----------------------------------------------------------------
+        wordBase.targetToFetchOutIs(wordKilled);
+        wordBase.targetForMissedIs(wordMissed);
+        //----------------------------------------------------------------
+        wordSource.targetToFetchOutIs(wordBase);
+        wordBOOK.showLengthWith(document.getElementById('wordsTotal'));
+        wordBOOK.showLength();
+        wordSource.showLengthWith(document.getElementById('wordsWaiting'));
+        wordKilled.showLengthWith(document.getElementById('wordsCatched'));
+        wordMissed.showLengthWith(document.getElementById('wordsMissed'));
+
+        $("#wordListTip").hide();
+        gameConfig.currentTest = new Test(wordBOOK, 2);
+        // gameConfig.currentTest.startTest();
+        //#######################################################################
+      });
+    </script>
+  </head>
+  <body >
+    <!-- ============================================================== -->
+    <div id="infoDiv">
+      <table width="100%">
+        <tr>
+          <td width=200 id="appTitle">Word Practice</td>
+          <td><span id="themeTitle" onclick="showListOfWords(wordBOOK);">Theme Title</span>&nbsp;&nbsp;&nbsp;<span style="font-size:12pt">Total:(<span class="numberDisplay" id="wordsTotal"></span>) words</span></td>
+          <td class="numberTitle">Wating: <span class="numberDisplay" id="wordsWaiting">0</span> </td>
+          <td class="numberTitle" onclick="showListOfWords(wordKilled);">Catched: <span class="numberDisplay" id="wordsCatched">0</span></td>
+          <td class="numberTitle" onclick="showListOfWords(wordMissed);">Missed: <span class="numberDisplay" id="wordsMissed">0</span></td>
+        </tr>
+      </table>
+    </div>
+    <!-- ======================vvv Test Area Design vvvv======================= -->
+      <div class="testArea">
+        <div class="testHead">
+          <table width="100%">
+            <tr>
+              <td width="50%" id="testTitle"></td>
+              <td><span id="currentTurn"></span> of <span id="totalProblems"></span></td>
+              <td></td>
+            </tr>
+          </table>
+        </div>
+        <div class="testBody">
+          <div id="testQuestion"></div>
+          <div id="testExampleArea"> </div>
+        </div>
+      </div>
+    <!-- =======================^^^ Test Area Design ^^^======================= -->
+
+    <!-- ============================================================== -->
+    <div id="collection">
+      <div id="collectionTitleArea">
+        <table>
+          <tr>
+            <td>
+              <div id="collectionTitle"></div>
+            </td>
+            <td>
+              <button onclick="collectionViewStyleIs();">Word List</button>
+              <button onclick="collectionViewStyleIs('WordBook');">Word Book</button>
+              <button onclick="hideListOfWords();">Hide</button>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div id="collectionWords"></div>
+    </div>
+    <!-- ============================================================== -->
+    <div class='memo'> <div class='memoTitle'></div> <div class='memoBody'></div></div>
+    <div id="wordListTip" class="bubbleTip" style="display: none;"> </div>
+    <!-- <p id="demo"></p> -->
+    <div class="defenceBase">
+      <table>
+        <tr>
+          <td>
+            Input: <input id="keyInput" size="30" />
+          </td>
+          <td>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>
