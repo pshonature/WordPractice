@@ -4,9 +4,63 @@
     <meta charset="utf-8">
     <title>Word Game, 2017</title>
     <style>
+      @import url('https://fonts.googleapis.com/css?family=Fredericka+the+Great');
+      @import url(http://fonts.googleapis.com/earlyaccess/nanumgothic.css);
+      @import url(http://fonts.googleapis.com/earlyaccess/nanummyeongjo.css);
+      @import url(http://fonts.googleapis.com/earlyaccess/nanumgothiccoding.css);
+      .nanumGothic {
+        font-family: 'Nanum Gothic', sans-serif;
+      }
+      .nanumMyeongjo {
+        font-family: 'Nanum Myeongjo', serif;
+      }
+      .nanumGothicCoding {
+        font-family: 'Nanum Gothic Coding', monospace;
+      }
+      .frederikaTheGreat {
+        font-family: 'Fredericka the Great', cursive;
+      }
       body {
         background-color: #E7F7D4;
+        /*background-color: black;*/
+        font-family: 'Nanum Gothic', sans-serif;
       }
+      /* =========================================== */
+
+      .bander-default, .bander-navy {
+        border: 5px solid #ddd;
+        border-radius: 5px;
+        background-color: #eee;
+        padding: 5px;
+        /*float: right;*/
+        margin-left: 1px;
+        margin-right: 1px;
+        color: black;
+      }
+      .bander-navy {
+        background-color: navy;
+        color: white;
+        border-color: #33f;
+      }
+      .label-head {
+        font-weight: bold;
+      }
+      .label-head-orange {
+        font-weight: bold;
+        color: #f90;
+      }
+      .label-value {
+        border: 1px solid #99ceff;
+        border-radius: 5px;
+        background-color: #0069cc;
+        padding: 3px;
+        padding-left: 7px;
+        padding-right: 7px;
+        margin-left: 5px;
+        font-weight: bold;
+        color: #fc0;
+      }
+      /* =========================================== */
       table.tableWordList {
         width: 100%;
         border-collapse: collapse;
@@ -76,29 +130,27 @@
         line-height: 20px;
         padding: 3px;
       }
-      #infoDiv {
+      /*#################### psho-css ###################*/
+      div.psho-container {
         border: 1px solid darkgray;
-        padding: 5px;
-        height: 40px;
+        padding: 10px;
         border-radius: 3px;
-        box-shadow: 3px 3px 2px darkgray;
-        background-color: #fc6;
-        position: relative;
       }
-      #appTitle {
+      .psho-shadow-default {
+        box-shadow: 3px 3px 2px darkgray;
+      }
+      div.psho-label-title{
+        padding: 0px;
         font-size: 20pt;
         color: navy;
-        font-weight: bold;
+        float: left;
+        margin-right: 20px;
       }
       td.numberTitle {
         font-size: 14pt;
         width: 120px;
       }
       span.numberDisplay {
-        font-size: 16pt;
-        color: blue;
-      }
-      #themeTitle {
         font-size: 16pt;
         color: blue;
       }
@@ -556,13 +608,13 @@
             k.addClass("wordList wordPaired").appendTo(targetElement);
           } else if (word.missed(true)) {
             let k = $(`<div>${word.word}</div>`);
-            k.addClass("wordList wordMissed").appendTo(targetElement);
+            k.addClass("wordList wordMissed nanumGothic").appendTo(targetElement);
           } else if(word.exposed(true)){
             let k = $(`<div>${word.word}</div>`);
-            k.addClass("wordList wordExposed").appendTo(targetElement);
+            k.addClass("wordList wordExposed nanumGothic").appendTo(targetElement);
           } else {
             let k = $(`<div>${word.word}</div>`);
-            k.addClass("wordList").appendTo(targetElement);
+            k.addClass("wordList nanumGothic").appendTo(targetElement);
           }
         }
         // targetElement.innerHTML = wordList;
@@ -574,13 +626,13 @@
         let wordTable = "<table class='tableWordList'><thead><th class='tableWord'>Word</th><th class='tablePronunciation'>Pronunciation</th><th class='tableMemo'>Memo</th><th class='tableReserved'>Reserved</th></thead><tbody>";
         for(let  word of this.words) {
           if (word.missed(true)) {
-            wordTable += `<tr class='tableWordRow'><td class='tableWord wordMissed';">${word.word}</td><td class='tablePronunciation'>[${word.pronunciation}]</td><td class='tableMemo'>${word.memo}</td><td class"tableReserved"> </td></tr>`;
+            wordTable += `<tr class='tableWordRow'><td class='tableWord wordMissed nanumGothic';">${word.word}</td><td class='tablePronunciation'>[${word.pronunciation}]</td><td class='tableMemo nanumMyeongjo'>${word.memo}</td><td class"tableReserved"> </td></tr>`;
           } else if (word.paired(true)) {
-            wordTable += `<tr class='tableWordRow'><td class='tableWord wordPaired';">${word.word}</td><td class='tablePronunciation'>[${word.pronunciation}]</td><td class='tableMemo'>${word.memo}</td><td class"tableReserved"> </td></tr>`;
+            wordTable += `<tr class='tableWordRow'><td class='tableWord wordPaired nanumGothic';">${word.word}</td><td class='tablePronunciation'>[${word.pronunciation}]</td><td class='tableMemo nanumMyeongjo'>${word.memo}</td><td class"tableReserved"> </td></tr>`;
           } else if(word.exposed(true)) {
-            wordTable += `<tr class='tableWordRow'><td class='tableWord wordExposed';">${word.word}</td><td class='tablePronunciation'>[${word.pronunciation}]</td><td class='tableMemo'>${word.memo}</td><td class"tableReserved"> </td></tr>`;
+            wordTable += `<tr class='tableWordRow'><td class='tableWord wordExposed nanumGothic';">${word.word}</td><td class='tablePronunciation'>[${word.pronunciation}]</td><td class='tableMemo nanumMyeongjo'>${word.memo}</td><td class"tableReserved"> </td></tr>`;
           } else {
-            wordTable += `<tr word='${word.word}' onclick='exposeThisRow(this);' class='tableWordRow'><td class='tableWord'>${word.word}</td><td class='tablePronunciation'>[${word.pronunciation}]</td><td class='tableMemo'>?</td><td class"tableReserved"> </td></tr>`;
+            wordTable += `<tr word='${word.word}' onclick='exposeThisRow(this);' class='tableWordRow'><td class='tableWord nanumGothic'>${word.word}</td><td class='tablePronunciation'>[${word.pronunciation}]</td><td class='tableMemo nanumMyeongjo'>?</td><td class"tableReserved"> </td></tr>`;
           }
         }
         wordTable += "</tbody> </table>";
@@ -874,8 +926,8 @@
           $(div).addClass("wordExposed");
           // $(div).css({"cursor": "e-resize"});
           let divp = $(div).position();
-          let tip = `<span style="font-size:13pt;color:blue;font-weight:bold;">${word.word}</span>`;
-          tip += `&nbsp;<span class="pronunciation">[${word.pronunciation}]</span><hr />${word.memo}`;
+          let tip = `<span class="nanumGothic" style="font-size:13pt;color:blue;font-weight:bold;">${word.word}</span>`;
+          tip += `&nbsp;<span class="pronunciation">[${word.pronunciation}]</span><hr /><span class="nanumMyeongjo">${word.memo}</span>`;
           $("#wordListTip").html(tip);
 
           let tipWidth = $("#wordListTip").outerWidth(true);
@@ -1019,7 +1071,7 @@
                             count = cmds[2].toNumber();
                           clearGameCollections()
                           wordBOOK.randomSelectAndCopyTo(count, wordSource);
-                          let nt = `[${wordBOOK.getTitle()}]에서 임의로 뽑은 ${count}개 단어장`;
+                          let nt = `<span class="label-head-orange nanumGothic">${wordBOOK.getTitle()}</span>에서 <span class="label-head-orange nanumGothic">임의로 뽑은 ${count}개</span> 단어`;
                           wordSource.setTitle(nt);
                           themeTitleFrom(wordSource);
                           wordSource.isCurrentViewCollection();
@@ -1032,9 +1084,9 @@
                             wordBOOK.searchAndCopyTo(sel, wordSource);
                             let nt = "";
                             if(sel === "")
-                              nt = `[${wordBOOK.getTitle()}] ${wordSource.length()}개 모두 선택한 단어장`;
+                              nt = `<span class="label-head-orange nanumGothic">${wordBOOK.getTitle()}</span> <span class="label-head-orange nanumGothic">전체</span> 단어`;
                             else
-                              nt = `[${wordBOOK.getTitle()}]에서 "${sel}"로 시작하는 ${wordSource.length()}개 단어장`;
+                              nt = `<span class="label-head-orange nanumGothic">${wordBOOK.getTitle()}</span>에서 <span class="label-head-orange nanumGothic">[${sel}]로 시작하는 ${wordSource.length()}개</span> 단어`;
                             wordSource.setTitle(nt);
                             themeTitleFrom(wordSource);
                             wordSource.isCurrentViewCollection();
@@ -1097,8 +1149,10 @@
           if(value.length > 0) {
             if(value.charAt(0) == '/')
               commandControl(value.substr(1).toLowerCase());
-            else
+            else {
               wordBase.findAndFetchToDefault(value);
+              wordBase.markMovingWords("");
+            }
           }
         } else {
           if(gameConfig.status === "game")
@@ -1159,14 +1213,30 @@
   </head>
   <body >
     <!-- ============================================================== -->
-    <div id="infoDiv">
-      <table width="100%">
+    <div class="psho-container psho-shadow-default" id="infoDiv">
+      <table width=100%>
         <tr>
-          <td width=200 id="appTitle">Word Practice</td>
-          <td><span id="themeTitle" onclick="showListOfWords(wordBOOK);">Theme Title</span>&nbsp;&nbsp;&nbsp;<span style="font-size:12pt">Total:(<span class="numberDisplay" id="wordsTotal"></span>) words</span></td>
-          <td class="numberTitle">Wating: <span class="numberDisplay" id="wordsWaiting">0</span> </td>
-          <td class="numberTitle" onclick="showListOfWords(wordKilled);">Catched: <span class="numberDisplay" id="wordsCatched">0</span></td>
-          <td class="numberTitle" onclick="showListOfWords(wordMissed);">Missed: <span class="numberDisplay" id="wordsMissed">0</span></td>
+          <td style="width: 200px;">
+            <div class="psho-label-title frederikaTheGreat" id="appTitle">Word Practice</div>
+          </td>
+          <td style="text-align:left;">
+                <span class="bander-navy label-head nanumGothic" id="themeTitle" onclick="showListOfWords(wordBOOK);">Theme Title</span>&nbsp;&nbsp;&nbsp;
+                <span class="label-head">Total:<span class="label-value" id="wordsTotal">0</span> words</span>
+          </td>
+          <td style="text-align: right;">
+            <span class="bander-default nanumGothic" >
+              <span class="label-head "> Waiting:</span>
+              <span class="label-value " id="wordsWaiting">-</span>
+            </span>
+            <span class="bander-default nanumGothic" >
+              <span class="label-head "> Catched:</span>
+              <span class="label-value style="font-weight:bold;" " id="wordsCatched">-</span>
+            </span>
+            <span class="bander-default nanumGothic" >
+              <span class="label-head "> Missed:</span>
+              <span class="label-value " id="wordsMissed">-</span>
+            </span>
+          </td>
         </tr>
       </table>
     </div>
@@ -1207,14 +1277,14 @@
       <div id="collectionWords"></div>
     </div>
     <!-- ============================================================== -->
-    <div class='memo'> <div class='memoTitle'></div> <div class='memoBody'></div></div>
+    <div class='memo'> <div class='memoTitle'></div> <div class='memoBody nanumMyeongjo'></div></div>
     <div id="wordListTip" class="bubbleTip" style="display: none;"> </div>
     <!-- <p id="demo"></p> -->
     <div class="defenceBase">
       <table>
         <tr>
           <td>
-            Input: <input id="keyInput" size="30" />
+            <span class="label-default">Input:</span> <input id="keyInput" size="30" />
           </td>
           <td>
           </td>
