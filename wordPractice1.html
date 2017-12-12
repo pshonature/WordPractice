@@ -60,6 +60,17 @@
         font-weight: bold;
         color: #fc0;
       }
+      .label-value-skey {
+        border: 1px solid #00d9ff;
+        border-radius: 5px;
+        background-color: #6facf2;
+        padding: 2px;
+        padding-left: 7px;
+        padding-right: 7px;
+        margin-left: 5px;
+        font-weight: bold;
+        color: #000000;
+      }
       /* =========================================== */
       table.tableWordList {
         width: 100%;
@@ -135,6 +146,16 @@
         padding: 3px;
       }
       /*#################### psho-css ###################*/
+      button {
+        border-radius: 5px;
+        background-color: #6e6e6e;
+        color: white;
+        padding: 5px;
+      }
+      button:hover {
+        background-color: #010ca4;
+        color: #ffed00;
+      }
       div.psho-container {
         border: 1px solid darkgray;
         padding: 10px;
@@ -161,7 +182,6 @@
       }
       #collection {
         position: realtive;
-        /*height: 300px;*/
         margin-top: 10px;
         border: 1px solid gray;
         background-color: #eeffaa;
@@ -176,7 +196,6 @@
       }
       #collectionTitleArea {
         margin-top: 5px;
-        padding-top: 10px;
         background-color: #d3f965;
         position: -webkit-sticky;
         position: sticky;
@@ -356,7 +375,8 @@
         "countZoneStaus": "hide",
         "heightOfInfoDiv": 0,
         "heightOfDefenceBase": 0,
-        "spaceControl": true
+        "spaceControl": true,
+        "masterCollection": null
       };
 
       //===============================================================
@@ -481,6 +501,11 @@
       Collection.prototype.isCurrentViewCollection = function() {
         gameConfig.currentViewCollection = this;
         themeTitleFrom(this);
+        if(gameConfig.masterCollection == this) {
+          $("#wordsTotal").html(gameConfig.masterCollection.length());
+        } else {
+          $("#wordsTotal").html(this.length() + '<span style="color:white;"> / </span>' + gameConfig.masterCollection.length());
+        }
       }
       Collection.prototype.targetForMissedIs = function(collection) {
         this.targetForMissed = collection;
@@ -673,14 +698,18 @@
       Collection.prototype.showListOfWords = function(showType = gameConfig.collectionViewStyle) {
         if(this.words.length) {
           this.sortByWords();
-          this.stringHeader(gameConfig.showCollectionTitle);
+          // this.stringHeader(gameConfig.showCollectionTitle);
           if(showType == "WordList") {
             gameConfig.collectionViewStyle = showType;
             this.attachWords(gameConfig.showCollectionList);
+            $("#btnWordList").hide();
+            $("#btnWordBook").show();
           }
           else {
             gameConfig.collectionViewStyle = showType;
             this.attachWordsTable(gameConfig.showCollectionList);
+            $("#btnWordList").show();
+            $("#btnWordBook").hide();
           }
           $(gameConfig.showCollectionBody).show();
         } else {
@@ -899,13 +928,13 @@
         }
       }
       function checkThisSelection(element) {
+        let timeFinished = new Date();
         let choice = Number($(element).attr("wordindex"));
         let ct = gameConfig.currentTest;
         let cp = ct.currentProblem;
-        let timeFinished = new Date();
         cp.timeInterval = Math.round((timeFinished.getTime() - cp.timeStarted.getTime())/1000);
-        cp.words[choice].exposed();
         if(choice) {  // if selected wroing number
+          cp.words[0].missed();
           cp.words[choice].missed();
           cp.wrongAnswer = choice;
           $(element).css("backgroundColor", "#fdd");
@@ -916,6 +945,7 @@
           }
         } else { // selected the correct answer
           cp.words[choice].paired();
+          cp.words[choice].exposed();
           cp.wasHit = true;
           $(element).css("backgroundColor", "#ddf");
           if(ct.type === "word")
@@ -1157,7 +1187,7 @@
                             count = cmds[2].toNumber();
                           clearGameCollections()
                           wordBOOK.randomSelectAndCopyTo(count, wordSource);
-                          let nt = `<span class="label-head-orange nanumGothic">${wordBOOK.getTitle()}</span>에서 <span class="label-head-orange nanumGothic">임의로 뽑은 ${count}개</span> 단어`;
+                          let nt = `${wordBOOK.getTitle()} 중에서 <span class="label-head-orange nanumGothic">임의로 뽑은 <span class="label-value-skey">${count}</span>개</span> 단어`;
                           wordSource.setTitle(nt);
                           themeTitleFrom(wordSource);
                           countZoneControl("show");
@@ -1173,9 +1203,9 @@
                             wordBOOK.searchAndCopyTo(sel, wordSource);
                             let nt = "";
                             if(sel === "")
-                              nt = `<span class="label-head-orange nanumGothic">${wordBOOK.getTitle()}</span> <span class="label-head-orange nanumGothic">전체</span> 단어`;
+                              nt = `${wordBOOK.getTitle()} <span class="label-head-orange nanumGothic">전체</span> 단어`;
                             else
-                              nt = `<span class="label-head-orange nanumGothic">${wordBOOK.getTitle()}</span>에서 <span class="label-head-orange nanumGothic">[${sel}]로 시작하는 ${wordSource.length()}개</span> 단어`;
+                              nt = `${wordBOOK.getTitle()} 중에서 <span class="label-head-orange nanumGothic"><span class="label-value-skey">${sel}</span>로 시작하는 </span> 단어`;
                             wordSource.setTitle(nt);
                             themeTitleFrom(wordSource);
                             countZoneControl("show");
@@ -1302,21 +1332,23 @@
         // wordSource.makeWordsFromString("DIT,Korea,USA,Japan,Hello");
         let wordBook = wordBook_2017_004; // <== from included js word book file.
         wordBOOK.makeWordsFromWordBook(wordBook);
+        gameConfig.masterCollection = wordBOOK;
         wordBOOK.isCurrentViewCollection();
-        themeTitleFrom(wordBOOK);
+        gameConfig.lengthOfMaster = wordBOOK.length();
+        // themeTitleFrom(wordBOOK);
         //----------------------------------------------------------------
         wordBase.targetToFetchOutIs(wordKilled);
         wordBase.targetForMissedIs(wordMissed);
         //----------------------------------------------------------------
         wordSource.targetToFetchOutIs(wordBase);
-        wordBOOK.showLengthWith(document.getElementById('wordsTotal'));
+        // wordBOOK.showLengthWith(document.getElementById('wordsTotal'));
         wordBOOK.showLength();
         wordSource.showLengthWith(document.getElementById('wordsWaiting'));
         wordKilled.showLengthWith(document.getElementById('wordsCatched'));
         wordMissed.showLengthWith(document.getElementById('wordsMissed'));
 
         $("#wordListTip").hide();
-        gameConfig.currentTest = new Test(wordBOOK, 2);
+        // gameConfig.currentTest = new Test(wordBOOK, 2);
         // gameConfig.currentTest.startTest();
         //#######################################################################
       });
@@ -1331,7 +1363,7 @@
             <div class="psho-label-title frederikaTheGreat" id="appTitle">Word Practice</div>
           </td>
           <td style="text-align:left;">
-                <span class="bander-navy label-head nanumGothic" id="themeTitle" onclick="showListOfWords(wordBOOK);">Theme Title</span>&nbsp;&nbsp;&nbsp;
+                <span class="bander-navy label-head nanumGothic" id="themeTitle" onclick="showListOfWords();">Theme Title</span>&nbsp;&nbsp;&nbsp;
                 <span class="label-head">Total:<span class="label-value" id="wordsTotal">0</span> words</span>
           </td>
           <td style="text-align: right;">
@@ -1376,13 +1408,13 @@
       <div id="collectionTitleArea">
         <table>
           <tr>
-            <td>
-              <div id="collectionTitle"></div>
+            <td style="vertical-align: middle;">
+              <button class="nanumGothic" id="btnHideThisCollection" title="Close word list view." onclick="hideListOfWords();"> X </button>
+              <button class="nanumGothic" id="btnWordList" onclick="collectionViewStyleIs();">Word Only</button>
+              <button class="nanumGothic" id="btnWordBook" onclick="collectionViewStyleIs('WordBook');">Word Book</button>
             </td>
             <td>
-              <button onclick="collectionViewStyleIs();">Word List</button>
-              <button onclick="collectionViewStyleIs('WordBook');">Word Book</button>
-              <button onclick="hideListOfWords();">Hide</button>
+              <div id="collectionTitle"></div>
             </td>
           </tr>
         </table>
