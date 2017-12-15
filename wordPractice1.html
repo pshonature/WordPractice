@@ -21,8 +21,8 @@
         font-family: 'Fredericka the Great', cursive;
       }
       body {
-        background-color: #E7F7D4;
-        /*background-color: black;*/
+        /*background-color: #E7F7D4;*/
+        background-color: black;
         font-family: 'Nanum Gothic', sans-serif;
       }
       /* =========================================== */
@@ -59,6 +59,17 @@
         margin-left: 5px;
         font-weight: bold;
         color: #fc0;
+      }
+      .label-value-off {
+        border: 1px solid #6387a8;
+        border-radius: 5px;
+        background-color: #7da7cf;
+        padding: 3px;
+        padding-left: 7px;
+        padding-right: 7px;
+        margin-left: 5px;
+        font-weight: bold;
+        color: #fff4c6;
       }
       .label-value-skey {
         border: 1px solid #00d9ff;
@@ -291,12 +302,11 @@
       }
       div.testExample {
         padding: 10px;
-        font-size: 15pt;
-        margin-top: 5px;
-        margin-bottom: 5px;
+        font-size: 17pt;
+        margin-top: 15px;
+        margin-bottom: 15px;
         padding-left: 30px;
         border-bottom: 1px dotted gray;
-        font-family: Arial, Helvetica, sans-serif;
       }
       div.testExample:hover {
         background-color: #eee;
@@ -365,8 +375,8 @@
         "currentViewCollection": null,
         "currentTest": null,
         "currentProblem": null,
-        "testInterval": 3500,  // in case of wrong selectio,
-        "correctInterval": 1500,  // in case of right selectio,
+        "testInterval": 4000,  // in case of wrong selectio,
+        "correctInterval": 4000,  // in case of right selectio,
         "numberOfWrongExamples": 3,
         "status": "wait", //one of wait|test|game|vie,
         "colorExposed": "#093",
@@ -675,6 +685,7 @@
         // targetElement.innerHTML = wordList;
         $("div.wordList").click(function() {wordListTipShow(this);});
         $("div.wordList").mouseout(function() {wordListTipHide(this);});
+        // $("div.wordList").dblclick(function(){$(this).remove();});
 
       }
       Collection.prototype.attachWordsTable = function(targetElement) {
@@ -841,7 +852,7 @@
       Test.prototype.typeIs = function(type) {
         this.type = type;
       }
-      Test.prototype.startTest = function(type) {
+      Test.prototype.startTest = function(type="word") {
         gameConfig.status = "test";
         if(type)
           this.type = type;
@@ -854,6 +865,7 @@
         $("div.testArea").fadeOut(1000);
         $("#keyInput").focus();
         gameConfig.currentTest = null;
+        // gameConfig.currentIndex = 0;
         gameConfig.status = "wait";
       }
       Test.prototype.suspendTest = function() {
@@ -870,7 +882,7 @@
         $("#currentTurn").html(this.current()+1);
 
         if(this.type === "word") {
-          $("#testQuestion").html(`${problem.key.word}&nbsp;&nbsp; <span style="font-size:15pt;color:lightgray;">[ ${problem.key.pronunciation} ]</span>`);
+          $("#testQuestion").html(`<span id="currentTestWord" style="color: #52bb38">${problem.key.word}</span>&nbsp;&nbsp; <span style="font-size:15pt;color:lightgray;">[ ${problem.key.pronunciation} ]</span>`);
         }
         else {
           $("#testQuestion").html(`${problem.key.memo}`);
@@ -880,9 +892,9 @@
         removeAllChildNodes($("#testExampleArea")[0]);
         for(let i=0; i<dispOrder.length; i++) {
           if(this.type === "word")
-            $(`<div  wordindex="${dispOrder[i]}" word="${problem.words[dispOrder[i]].word}" class="testExample">${problem.words[dispOrder[i]].memo}</div>`).appendTo("#testExampleArea");
+            $(`<div wordindex="${dispOrder[i]}" word="${problem.words[dispOrder[i]].word}" class="testExample nanumMyeongjo">${problem.words[dispOrder[i]].memo}</div>`).appendTo("#testExampleArea");
           else
-            $(`<div  wordindex="${dispOrder[i]}" word="${problem.words[dispOrder[i]].word}" class="testExample"><span style="font-size:20pt;">${problem.words[dispOrder[i]].word}</span></div>`).appendTo("#testExampleArea");
+            $(`<div wordindex="${dispOrder[i]}" word="${problem.words[dispOrder[i]].word}" class="testExample nanumGothic"><span style="font-size:20pt;font-weight:bold;">${problem.words[dispOrder[i]].word}</span></div>`).appendTo("#testExampleArea");
         }
         $("div.testExample").bind("click", function(){checkThisSelection(this);});
         this.currentProblem.timeStarted = new Date();
@@ -903,6 +915,26 @@
         }
       }
       //===============================================================
+      function gameSpeed(value, element) {
+        if(value === undefined) {
+          return gameConfig.clockSpeed;
+        } else if(value === "slower") {
+            gameConfig.clockSpeed += 200;
+            gameControl("stop&go");
+        } else if(value === "faster") {
+            gameConfig.clockSpeed -= 200;
+            gameConfig.clockSpeed = (gameConfig.clockSpeed < gameConfig.clockSpeedMinimum)? gameConfig.clockSpeedMinimum: gameConfig.clockSpeed;
+            gameControl("stop&go");
+        } else if(value === "default") {
+            gameConfig.clockSpeed = 1000;
+            gameControl("stop&go");
+        } else {
+          if(value >= gameConfig.clockSpeedMinimum)
+            gameConfig.clockSpeed = value;
+            gameControl("stop&go");
+        }
+        $("#speedControl").html(gameConfig.clockSpeed);
+      }
       function gameControl(mode) {
         if(mode === "go") {
           if(wordSource.handleFetching)
@@ -926,118 +958,6 @@
           wordBase.stopMoving();
           gameConfig.status = "wait";
         }
-      }
-      function checkThisSelection(element) {
-        let timeFinished = new Date();
-        let choice = Number($(element).attr("wordindex"));
-        let ct = gameConfig.currentTest;
-        let cp = ct.currentProblem;
-        cp.timeInterval = Math.round((timeFinished.getTime() - cp.timeStarted.getTime())/1000);
-        if(choice) {  // if selected wroing number
-          cp.words[0].missed();
-          cp.words[choice].missed();
-          cp.wrongAnswer = choice;
-          $(element).css("backgroundColor", "#fdd");
-          if(ct.type === "word")
-            $(element).prepend(`<span style="font-weight:bold;font-size:20pt;color:red;">${cp.words[choice].word}</span> <span class="pronunciation" style="font-size:15pt;color:#777;">[ ${cp.words[choice].pronunciation} ]</span>: `);
-          else {
-            $(element).html(`<span style="font-weight:bold;font-size:20pt;color:red;">${cp.words[choice].word}</span> <span class="pronunciation" style="font-size:15pt;color:#777;">[ ${cp.words[choice].pronunciation} ]</span>: ${cp.words[choice].memo}`);
-          }
-        } else { // selected the correct answer
-          cp.words[choice].paired();
-          cp.words[choice].exposed();
-          cp.wasHit = true;
-          $(element).css("backgroundColor", "#ddf");
-          if(ct.type === "word")
-            $(element).prepend(`<span style="font-weight:bold;font-size:20pt;color:blue;">${cp.words[choice].word}</span> <span class="pronunciation" style="font-size:15pt;color:#777;">[ ${cp.words[choice].pronunciation} ]</span>: `);
-          else {
-            $(element).html(`<span style="font-weight:bold;font-size:20pt;color:blue;">${cp.words[choice].word}</span> <span class="pronunciation" style="font-size:15pt;color:#777;">[ ${cp.words[choice].pronunciation} ]</span>: ${cp.words[choice].memo}`);
-          }
-        }
-        $("#testQuestion").append(`&nbsp;&nbsp;<span style="font-size:12pt;color:#aaa;">${cp.timeInterval} secs.</span>`);
-        $("div.testExample").unbind("click");
-        // alert($(element).attr("word")+","+$(element).attr("wordindex"));
-        let interval = (choice)? gameConfig.testInterval: gameConfig.correctInterval;
-        setTimeout(function(){gameConfig.currentTest.showNextProblem();}, interval);
-      }
-      //===============================================================
-      function showListOfWords(collection = gameConfig.currentViewCollection) {
-        if(gameConfig.status === "test" || gameConfig.status === "game")
-          return;
-        if(collection === undefined || collection === null) //지정된 collection이 없으면
-          return; // 어떤 처리도 하지 않고 리턴.
-        //collection이 결정되어 있거나(gameConfig.currentViewCollection) 매개변수로 전달되었으면(collection)
-        //gameConfig.currentViewCollection에 세팅부터 한다.
-        gameConfig.currentViewCollection = collection;
-        //이후에 필요한 처리를 한다.
-        gameConfig.currentViewCollection.showListOfWords(gameConfig.collectionViewStyle);
-        gameConfig.status = "view";
-      }
-      function hideListOfWords() {
-        gameConfig.status = "wait";
-        $("#collection").fadeOut(200);
-        $("#keyInput").focus();
-      }
-      function collectionViewStyleIs(style = "WordList") {
-        gameConfig.collectionViewStyle = style;
-        showListOfWords();
-      }
-      //===============================================================
-      function wordListTipHide(div) {
-        // $(div).css({"cursor": "auto"});
-        $("#wordListTip").hide();
-      }
-      function wordListTipShow(div) {
-        let word = wordBOOK.findWord(div.innerHTML.trim());
-        if(word) {
-          word.exposed();
-          $(div).addClass("wordExposed");
-          // $(div).css({"cursor": "e-resize"});
-          let divp = $(div).position();
-          let tip = `<span class="nanumGothic" style="font-size:13pt;color:blue;font-weight:bold;">${word.word}</span>`;
-          tip += `&nbsp;<span class="pronunciation">[${word.pronunciation}]</span><hr /><span class="nanumMyeongjo">${word.memo}</span>`;
-          $("#wordListTip").html(tip);
-
-          let tipWidth = $("#wordListTip").outerWidth(true);
-          if((divp.left+tipWidth) > window.innerWidth){
-            divp.left = (window.innerWidth-tipWidth-10);
-          }
-
-          $("#wordListTip").css({"left": divp.left+"px", "top": (divp.top-$("#wordListTip").outerHeight(true)-4)+"px"});
-          $("#wordListTip").show();
-        }
-      }
-      //===============================================================
-      function memoHide() {
-        $(".memo").fadeOut(200);
-        gameConfig.handleMemoShow = null;
-      }
-      function memoShow(word) {
-        if(gameConfig.showMemo)
-          word.exposed();
-        let x = $(word.div).css("left");
-        let y = $(word.div).css("top");
-        $(".memoTitle").html(word.word + `<span class="pronunciation">[${word.pronunciation}]</span>`);
-        $(".memoBody").html(word.memo);
-        let memoWidth = $(".memo").outerWidth(true);
-        if((x.toNumber()+memoWidth) > window.innerWidth)
-          x = (window.innerWidth-memoWidth-5)+"px";
-        $(".memo").css({"left": x, "top": y}).fadeIn(100);
-
-      }
-      function clearGameCollections() {
-        wordSource.clearWords();
-        wordBase.clearWords();
-        wordKilled.clearWords();
-        wordMissed.clearWords();
-      }
-      function exposeThisRow(targetTR) {
-        let titleWord = $(targetTR).attr("word");
-        let word = wordBOOK.findWord(titleWord);
-        let memoTD = targetTR.childNodes[2];
-        word.exposed();
-        $(memoTD).html(word.memo);
-        $(targetTR.childNodes[0]).addClass("wordExposed");
       }
       function countZoneControl(mode) {
         if(mode === "show") {
@@ -1085,6 +1005,113 @@
         $("#spaceControl").html((gameConfig.spaceControl)? "ON" : "OFF");
       }
       //===============================================================
+      function checkThisSelection(element) {
+        let choice = Number($(element).attr("wordindex"));
+        let ct = gameConfig.currentTest;
+        let cp = ct.currentProblem;
+        $(element).unbind("click");
+        if(choice) {  // if selected wroing number
+          cp.words[0].missed();
+          cp.words[choice].missed();
+          cp.words[choice].exposed();
+          cp.wrongAnswer = choice;
+          $(element).css("backgroundColor", "#fdd");
+          if(ct.type === "word") {
+            $("#currentTestWord").css("color", "#e41818");
+            $(element).prepend(`<span class="nanumGothic" style="font-weight:bold;font-size:20pt;color:red;">${cp.words[choice].word}</span> <span class="pronunciation" style="font-size:15pt;color:#777;">[ ${cp.words[choice].pronunciation} ]</span>: `);
+          } else {
+            $(element).html(`<span class="nanumGothic" style="font-weight:bold;font-size:20pt;color:red;" >${cp.words[choice].word}</span> <span class="pronunciation" style="font-size:15pt;color:#777;">[ ${cp.words[choice].pronunciation} ]</span>: ${cp.words[choice].memo}`);
+          }
+        } else { // selected the correct answer
+          let timeFinished = new Date();
+          cp.timeInterval = Math.round((timeFinished.getTime() - cp.timeStarted.getTime())/1000);
+          $("#testQuestion").append(`&nbsp;&nbsp;<span style="font-size:12pt;color:#aaa;">${cp.timeInterval} secs.</span>`);
+          cp.words[choice].paired();
+          cp.words[choice].exposed();
+          cp.wasHit = true;
+          $(element).css("backgroundColor", "#ddf");
+          $("#currentTestWord").css("color", "#3681ff");
+          if(ct.type === "word")
+            $(element).prepend(`<span class="nanumGothic" style="font-weight:bold;font-size:20pt;color:blue;">${cp.words[choice].word}</span> <span class="pronunciation" style="font-size:15pt;color:#777;">[ ${cp.words[choice].pronunciation} ]</span>: `);
+          else {
+            $(element).html(`<span class="nanumGothic" style="font-weight:bold;font-size:20pt;color:blue;">${cp.words[choice].word}</span> <span class="pronunciation" style="font-size:15pt;color:#777;">[ ${cp.words[choice].pronunciation} ]</span>: ${cp.words[choice].memo}`);
+          }
+          setTimeout(function(){gameConfig.currentTest.showNextProblem();}, gameConfig.testInterval);
+        }
+        // $("div.testExample").unbind("click");
+        // alert($(element).attr("word")+","+$(element).attr("wordindex"));
+        // let interval = (choice)? gameConfig.testInterval: gameConfig.correctInterval;
+      }
+      //===============================================================
+      function showListOfWords(collection = gameConfig.currentViewCollection) {
+        if(gameConfig.status === "test" || gameConfig.status === "game")
+          return;
+        if(collection === undefined || collection === null) //지정된 collection이 없으면
+          return; // 어떤 처리도 하지 않고 리턴.
+        //collection이 결정되어 있거나(gameConfig.currentViewCollection) 매개변수로 전달되었으면(collection)
+        //gameConfig.currentViewCollection에 세팅부터 한다.
+        gameConfig.currentViewCollection = collection;
+        //이후에 필요한 처리를 한다.
+        gameConfig.currentViewCollection.showListOfWords(gameConfig.collectionViewStyle);
+        gameConfig.status = "view";
+      }
+      function hideListOfWords() {
+        gameConfig.status = "wait";
+        $("#collection").fadeOut(200);
+        $("#keyInput").focus();
+      }
+      //===============================================================
+      function wordListTipHide(div) {
+        // $(div).css({"cursor": "auto"});
+        $("#wordListTip").hide();
+      }
+      function wordListTipShow(div) {
+        let word = wordBOOK.findWord(div.innerHTML.trim());
+        if(word) {
+          word.exposed();
+          $(div).addClass("wordExposed");
+          // $(div).css({"cursor": "e-resize"});
+          let divp = $(div).position();
+          let tip = `<span class="nanumGothic" style="font-size:13pt;color:blue;font-weight:bold;">${word.word}</span>`;
+          tip += `&nbsp;<span class="pronunciation">[${word.pronunciation}]</span><hr /><span class="nanumMyeongjo">${word.memo}</span>`;
+          $("#wordListTip").html(tip);
+
+          let tipWidth = $("#wordListTip").outerWidth(true);
+          if((divp.left+tipWidth) > window.innerWidth){
+            divp.left = (window.innerWidth-tipWidth-10);
+          }
+
+          $("#wordListTip").css({"left": divp.left+"px", "top": (divp.top-$("#wordListTip").outerHeight(true)-4)+"px"});
+          $("#wordListTip").show();
+        }
+      }
+      //===============================================================
+      function memoHide() {
+        $(".memo").fadeOut(200);
+        gameConfig.handleMemoShow = null;
+      }
+      function memoShow(word) {
+        if(gameConfig.showMemo)
+          word.exposed();
+        let x = $(word.div).css("left");
+        let y = $(word.div).css("top");
+        $(".memoTitle").html(word.word + `<span class="pronunciation">[${word.pronunciation}]</span>`);
+        $(".memoBody").html(word.memo);
+        let memoWidth = $(".memo").outerWidth(true);
+        if((x.toNumber()+memoWidth) > window.innerWidth)
+          x = (window.innerWidth-memoWidth-5)+"px";
+        $(".memo").css({"left": x, "top": y}).fadeIn(100);
+
+      }
+      function exposeThisRow(targetTR) {
+        let titleWord = $(targetTR).attr("word");
+        let word = wordBOOK.findWord(titleWord);
+        let memoTD = targetTR.childNodes[2];
+        word.exposed();
+        $(memoTD).html(word.memo);
+        $(targetTR.childNodes[0]).addClass("wordExposed");
+      }
+      //===============================================================
       function commandControl(cmd) {
         //빈 칸으로 split 후 빈칸만으로 된 요소는 제거함.
         let cmds = _.map(cmd.split(" "), (x)=>{return x.trim();}).filter((x)=>{return x.length;});
@@ -1117,12 +1144,13 @@
                         $("#collection").fadeOut(200);
                         gameConfig.status = "wait";
                       }
+                      countZoneControl("hide");
                       break;
           case "d": case "ㅇ": case "drop":
                       hideListOfWords();
                       clearGameCollections();
                       wordBOOK.isCurrentViewCollection();
-                      gameConfig.currentTest.finishTest();
+                      // gameConfig.currentTest.finishTest();
                       gameConfig.status = "wait";
                       countZoneControl("hide");
                       break;
@@ -1141,11 +1169,18 @@
                       }
                       break;
           case "t": case "ㅅ": case "test":
-                      if(gameConfig.status === "wait") {
-                        if(cmds.length > 1)
+                      if(gameConfig.status !== "wait")
+                        return;
+                      if(gameConfig.currentTest === null) {
+                        if(wordPicked.length() > 0) {
+                          gameConfig.currentTest = new Test(wordPicked);
                           gameConfig.currentTest.startTest(cmds[1]);
-                        else
-                          gameConfig.currentTest.startTest();
+                          return;
+                        } else {
+                          return;
+                        }
+                      } else {
+                        gameConfig.currentTest.startTest(cmds[1]);
                       }
                       break;
           case "s": case "ㄴ": case "stop":
@@ -1155,6 +1190,8 @@
                       break;
           case "g": case "ㅎ": case "go":
                       if(gameConfig.status === "game" || gameConfig.status === "wait") {
+                        if(gameConfig.status === "wait")
+                          countZoneControl("show");
                         gameControl("go");
                         wordBase.showAll();
                         $("#collection").fadeOut(200);
@@ -1190,75 +1227,40 @@
                           let nt = `${wordBOOK.getTitle()} 중에서 <span class="label-head-orange nanumGothic">임의로 뽑은 <span class="label-value-skey">${count}</span>개</span> 단어`;
                           wordSource.setTitle(nt);
                           themeTitleFrom(wordSource);
-                          countZoneControl("show");
-                          gameConfig.currentTest = new Test(wordSource);
-                          gameConfig.currentTest.typeIs("word");
+                          // countZoneControl("show");
+                          // gameConfig.currentTest = new Test(wordSource);
+                          // gameConfig.currentTest.typeIs("memo");
                           wordSource.copyWordsTo(wordPicked);
                           wordPicked.setTitle(nt);
                           wordPicked.isCurrentViewCollection();
                         } else {
                           let numberOfSelected = wordBOOK.selectedLength(sel);
-                          if(confirm(`[${numberOfSelected}]개의 단어가 검색되었습니다. 검색 결과로 시작할까요?`)) {
-                            clearGameCollections()
-                            wordBOOK.searchAndCopyTo(sel, wordSource);
-                            let nt = "";
-                            if(sel === "")
-                              nt = `${wordBOOK.getTitle()} <span class="label-head-orange nanumGothic">전체</span> 단어`;
-                            else
-                              nt = `${wordBOOK.getTitle()} 중에서 <span class="label-head-orange nanumGothic"><span class="label-value-skey">${sel}</span>로 시작하는 </span> 단어`;
-                            wordSource.setTitle(nt);
-                            themeTitleFrom(wordSource);
-                            countZoneControl("show");
-                            gameConfig.currentTest = new Test(wordSource);
-                            gameConfig.currentTest.typeIs("word");
-                            wordSource.copyWordsTo(wordPicked);
-                            wordPicked.setTitle(nt);
-                            wordPicked.isCurrentViewCollection();
+                          if(numberOfSelected) {
+                            if(confirm(`[${numberOfSelected}]개의 단어가 검색되었습니다. 검색 결과로 시작할까요?`)) {
+                              clearGameCollections()
+                              wordBOOK.searchAndCopyTo(sel, wordSource);
+                              let nt = "";
+                              if(sel === "")
+                                nt = `${wordBOOK.getTitle()} <span class="label-head-orange nanumGothic">전체</span> 단어`;
+                              else
+                                nt = `${wordBOOK.getTitle()} 중에서 <span class="label-head-orange nanumGothic"><span class="label-value-skey">${sel}</span>로 시작하는 </span> 단어`;
+                              wordSource.setTitle(nt);
+                              themeTitleFrom(wordSource);
+                              // countZoneControl("show");
+                              // gameConfig.currentTest = new Test(wordSource);
+                              // gameConfig.currentTest.typeIs("memo");
+                              wordSource.copyWordsTo(wordPicked);
+                              wordPicked.setTitle(nt);
+                              wordPicked.isCurrentViewCollection();
+                            }
+                          } else {
+                            alert(`[${sel}]로 검색된 단어가 없습니다.`);
+                            return;
                           }
                         }
                       }
                       break;
         }
-      }
-      //length개(0~length-1) 중 임의로 count개만큼 선택하여 배열로 리턴.
-      function randomSequence(length, count=length, except=-1) {
-        let sourceIndexArray = [];
-        let randomIndexArray = [];
-        count = (count > length)? length : count;
-        for(let i=0; i<length; i++)
-          sourceIndexArray.push(i);
-        if(except < 0) {
-          for(let i=0; i<count; i++)
-            randomIndexArray.push(sourceIndexArray.splice(Math.floor(Math.random()*sourceIndexArray.length),1)[0]);
-        } else {
-          sourceIndexArray.splice(except, 1);  // remove item[except]
-          count = (count >= length)? length-1 : count;
-          for(let i=0; i<count; i++)
-            randomIndexArray.push(sourceIndexArray.splice(Math.floor(Math.random()*sourceIndexArray.length),1)[0]);
-        }
-        return randomIndexArray;
-
-      }
-      //===============================================================
-      function gameSpeed(value, element) {
-        if(value === undefined) {
-          return gameConfig.clockSpeed;
-        } else if(value === "slower") {
-            gameConfig.clockSpeed += 200;
-            gameControl("stop&go");
-        } else if(value === "faster") {
-            gameConfig.clockSpeed -= 200;
-            gameConfig.clockSpeed = (gameConfig.clockSpeed < gameConfig.clockSpeedMinimum)? gameConfig.clockSpeedMinimum: gameConfig.clockSpeed;
-            gameControl("stop&go");
-        } else if(value === "default") {
-            gameConfig.clockSpeed = 1000;
-            gameControl("stop&go");
-        } else {
-          if(value >= gameConfig.clockSpeedMinimum)
-            gameConfig.clockSpeed = value;
-            gameControl("stop&go");
-        }
-        $("#speedControl").html(gameConfig.clockSpeed);
       }
       function inputControl() {
         let input = document.getElementById('keyInput');
@@ -1291,43 +1293,77 @@
             wordBase.markMovingWords(value);
         }
       }
-      function setShowCollection(body, title, list) {
-        gameConfig.showCollectionBody = body;
-        gameConfig.showCollectionTitle = title;
-        gameConfig.showCollectionList = list;
+      //===============================================================
+      //length개(0~length-1) 중 임의로 count개만큼 선택하여 배열로 리턴.
+      function randomSequence(length, count=length, except=-1) {
+        let sourceIndexArray = [];
+        let randomIndexArray = [];
+        count = (count > length)? length : count;
+        for(let i=0; i<length; i++)
+          sourceIndexArray.push(i);
+        if(except < 0) {
+          for(let i=0; i<count; i++)
+            randomIndexArray.push(sourceIndexArray.splice(Math.floor(Math.random()*sourceIndexArray.length),1)[0]);
+        } else {
+          sourceIndexArray.splice(except, 1);  // remove item[except]
+          count = (count >= length)? length-1 : count;
+          for(let i=0; i<count; i++)
+            randomIndexArray.push(sourceIndexArray.splice(Math.floor(Math.random()*sourceIndexArray.length),1)[0]);
+        }
+        return randomIndexArray;
+
       }
       function _id(id) {
         return document.getElementById(id);
       }
-      //===============================================================
       function removeAllChildNodes(node) {
         while(node.hasChildNodes()) {
           node.removeChild(node.firstChild);
         }
       }
       //===============================================================
-      function themeTitleFrom(collection) {
-        $("#themeTitle").html(collection.title);
+      function collectionViewStyleIs(style = "WordList") {
+        gameConfig.collectionViewStyle = style;
+        showListOfWords();
+      }
+      function clearGameCollections() {
+        wordSource.clearWords();
+        wordBase.clearWords();
+        wordKilled.clearWords();
+        wordMissed.clearWords();
+        wordPicked.clearWords();
+        if(gameConfig.currentTest)
+          gameConfig.currentTest.finishTest();
+      }
+      function setShowCollection(body, title, list) {
+        gameConfig.showCollectionBody = body;
+        gameConfig.showCollectionTitle = title;
+        gameConfig.showCollectionList = list;
       }
       function setHeightOfCollection() {
         let winHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
         let collectionHeight = winHeight - gameConfig.heightOfInfoDiv - gameConfig.heightOfDefenceBase - 50;
         $("#collection").css("maxHeight", collectionHeight/2+"px");
       }
+      function themeTitleFrom(collection) {
+        $("#themeTitle").html(collection.title);
+      }
+      //===============================================================
+      //===============================================================
       //#######################################################################
       $(document).ready(function(){
         gameConfig.heightOfInfoDiv = $("#infoDiv").outerHeight(true);
         gameConfig.heightOfDefenceBase = $(".defenceBase").outerHeight(true);
         setHeightOfCollection();
 
-        gameConfig.startTop = $("#infoDiv").css("top").toNumber() + $("#infoDiv").outerHeight(true)+15;
+        gameConfig.startTop = $("#infoDiv").outerHeight(true)+15;
+        // gameConfig.startTop = $("#infoDiv").css("top").toNumber() + $("#infoDiv").outerHeight(true)+15;
         setShowCollection(_id("collection"), _id("collectionTitle"), _id("collectionWords"));
         $(".memo").hide();
 
         gameConfig.defenceBaseTop = $(".defenceBase").css("top").toNumber();
 
         $("#keyInput").keyup(inputControl);
-        $("#keyInput").focus();
         //----------------------------------------------------------------
         // wordSource.makeWordsFromString("DIT,Korea,USA,Japan,Hello");
         let wordBook = wordBook_2017_004; // <== from included js word book file.
@@ -1348,6 +1384,10 @@
         wordMissed.showLengthWith(document.getElementById('wordsMissed'));
 
         $("#wordListTip").hide();
+        $("#infoDiv").fadeIn(1500);
+        $("#commandDiv").fadeIn(1500);
+        $("#keyInput").focus();
+
         // gameConfig.currentTest = new Test(wordBOOK, 2);
         // gameConfig.currentTest.startTest();
         //#######################################################################
@@ -1356,7 +1396,7 @@
   </head>
   <body >
     <!-- ============================================================== -->
-    <div class="psho-container psho-shadow-default" id="infoDiv">
+    <div style="display:none;" class="psho-container psho-shadow-default" id="infoDiv">
       <table width=100%>
         <tr>
           <td style="width: 200px;">
@@ -1386,21 +1426,21 @@
       </table>
     </div>
     <!-- ======================vvv Test Area Design vvvv======================= -->
-      <div class="testArea">
-        <div class="testHead">
-          <table width="100%">
-            <tr>
-              <td width="50%" id="testTitle"></td>
-              <td><span id="currentTurn"></span> of <span id="totalProblems"></span></td>
-              <td></td>
-            </tr>
-          </table>
-        </div>
-        <div class="testBody">
-          <div id="testQuestion"></div>
-          <div id="testExampleArea"> </div>
-        </div>
+    <div class="testArea nanumGothic">
+      <div class="testHead nanumGothic">
+        <table width="100%">
+          <tr>
+            <td>Problem: <span class="label-value" id="currentTurn"></span> of <span class="label-value-off" id="totalProblems"></span></td>
+            <td width="50%" id="testTitle"></td>
+            <td></td>
+          </tr>
+        </table>
       </div>
+      <div class="testBody nanumGothic">
+        <div id="testQuestion"></div>
+        <div id="testExampleArea"> </div>
+      </div>
+    </div>
     <!-- =======================^^^ Test Area Design ^^^======================= -->
 
     <!-- ============================================================== -->
@@ -1425,15 +1465,13 @@
     <div class='memo'> <div class='memoTitle'></div> <div class='memoBody nanumMyeongjo'></div></div>
     <div id="wordListTip" class="bubbleTip" style="display: none;"> </div>
     <!-- <p id="demo"></p> -->
-    <div class="defenceBase">
-      <table style="font-size: 12pt;">
+    <div style="display:none;" class="defenceBase" id="commandDiv">
+      <table style="font-size: 12pt; width:100%;">
         <tr>
-          <td style="font-size: 14pt; padding:5px;">
+          <td style="font-size: 14pt; padding:5px; width: 300px;">
             <span class="label-head">Input:</span> <input autocomplete="off" class="label-head" id="keyInput" size="20" />
           </td>
-          <td>
-          </td>
-          <td style="text-align: right;">
+          <td style="text-align: left;">
             <span class="bander-default nanumGothic" id="displaySpaceControl" >
               <span class="label-head "> Space ENTER:</span>
               <span class="label-value " id="spaceControl">ON</span>
@@ -1446,6 +1484,9 @@
               <span class="label-head "> Speed:</span>
               <span class="label-value " id="speedControl">1000</span>
             </span>
+          </td>
+          <td class="nanumGothic" style="font-size: 7pt; text-align:right;">
+            Designed by Pongsik, Ho. Dept. of Computer Information, DIT. <br />Copyright(c) 2017 All rights reserved.
           </td>
         </tr>
       </table>
