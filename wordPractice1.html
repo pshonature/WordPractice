@@ -882,10 +882,16 @@
         $("#currentTurn").html(this.current()+1);
 
         if(this.type === "word") {
-          $("#testQuestion").html(`<span id="currentTestWord" style="color: #52bb38">${problem.key.word}</span>&nbsp;&nbsp; <span style="font-size:15pt;color:lightgray;">[ ${problem.key.pronunciation} ]</span>`);
+          if(problem.key.missed(true)>0)
+            $("#testQuestion").html(`<span id="currentTestWord" style="color: #e88282">${problem.key.word}</span>&nbsp;&nbsp; <span style="font-size:15pt;color:lightgray;">[ ${problem.key.pronunciation} ]</span>`);
+          else
+            $("#testQuestion").html(`<span id="currentTestWord" style="color: #52bb38">${problem.key.word}</span>&nbsp;&nbsp; <span style="font-size:15pt;color:lightgray;">[ ${problem.key.pronunciation} ]</span>`);
         }
         else {
-          $("#testQuestion").html(`${problem.key.memo}`);
+          if(problem.key.missed(true)>0)
+            $("#testQuestion").html(`<span id="currentTestWord" style="color: #e88282">${problem.key.memo}</span>`);
+          else
+            $("#testQuestion").html(`<span id="currentTestWord" style="color: #52bb38">${problem.key.memo}</span>`);
         }
 
         let dispOrder = randomSequence(problem.words.length);
@@ -1020,15 +1026,16 @@
             $("#currentTestWord").css("color", "#e41818");
             $(element).prepend(`<span class="nanumGothic" style="font-weight:bold;font-size:20pt;color:red;">${cp.words[choice].word}</span> <span class="pronunciation" style="font-size:15pt;color:#777;">[ ${cp.words[choice].pronunciation} ]</span>: `);
           } else {
+            $("#currentTestWord").css("color", "#e41818");
             $(element).html(`<span class="nanumGothic" style="font-weight:bold;font-size:20pt;color:red;" >${cp.words[choice].word}</span> <span class="pronunciation" style="font-size:15pt;color:#777;">[ ${cp.words[choice].pronunciation} ]</span>: ${cp.words[choice].memo}`);
           }
         } else { // selected the correct answer
+          $("div.testExample").unbind("click");
           let timeFinished = new Date();
           cp.timeInterval = Math.round((timeFinished.getTime() - cp.timeStarted.getTime())/1000);
           $("#testQuestion").append(`&nbsp;&nbsp;<span style="font-size:12pt;color:#aaa;">${cp.timeInterval} secs.</span>`);
           cp.words[choice].paired();
           cp.words[choice].exposed();
-          cp.wasHit = true;
           $(element).css("backgroundColor", "#ddf");
           $("#currentTestWord").css("color", "#3681ff");
           if(ct.type === "word")
@@ -1036,9 +1043,18 @@
           else {
             $(element).html(`<span class="nanumGothic" style="font-weight:bold;font-size:20pt;color:blue;">${cp.words[choice].word}</span> <span class="pronunciation" style="font-size:15pt;color:#777;">[ ${cp.words[choice].pronunciation} ]</span>: ${cp.words[choice].memo}`);
           }
-          setTimeout(function(){gameConfig.currentTest.showNextProblem();}, gameConfig.testInterval);
+          if(cp.words[0].missed(true) > 0) {
+            if((ct.current()+1) >= ct.length()) //in case of last problem
+              setTimeout(function(){gameConfig.currentTest.showNextProblem();}, gameConfig.testInterval);
+            else
+              $("#testQuestion").append("&nbsp;&nbsp;<button id='btnNextProblem' onclick='gameConfig.currentTest.showNextProblem();'>Next Problem</button>");
+          } else {
+            cp.wasHit = true;
+            // $("#testQuestion").append(`&nbsp;&nbsp;<button id="btnNextProblem" onclick='gameConfig.currentTest.showNextProblem();'>${cp.timeInterval/1000}</button> secs. left for next probelm.`)
+            setTimeout(function(){gameConfig.currentTest.showNextProblem();}, gameConfig.testInterval);
+            // btnTimer();
+          }
         }
-        // $("div.testExample").unbind("click");
         // alert($(element).attr("word")+","+$(element).attr("wordindex"));
         // let interval = (choice)? gameConfig.testInterval: gameConfig.correctInterval;
       }
@@ -1054,11 +1070,13 @@
         //이후에 필요한 처리를 한다.
         gameConfig.currentViewCollection.showListOfWords(gameConfig.collectionViewStyle);
         gameConfig.status = "view";
+        // _id("themeTitle").onclick = hideListOfWords;
       }
       function hideListOfWords() {
         gameConfig.status = "wait";
         $("#collection").fadeOut(200);
         $("#keyInput").focus();
+        // _id("themeTitle").onclick = showListOfWords;
       }
       //===============================================================
       function wordListTipHide(div) {
@@ -1321,6 +1339,15 @@
           node.removeChild(node.firstChild);
         }
       }
+      function btnTimer() {
+        // $("#btnNextProblem").html(30);
+        function countDown() {
+          let c = $("#btnNextProblem").text();
+          $("#btnNextProblem").text(c-1);
+        }
+        let handle = setInterval(countDown, 1000);
+        setTimeout(function(){clearInterval(handle);}, gameConfig.testInterval);
+      }
       //===============================================================
       function collectionViewStyleIs(style = "WordList") {
         gameConfig.collectionViewStyle = style;
@@ -1346,7 +1373,8 @@
         $("#collection").css("maxHeight", collectionHeight/2+"px");
       }
       function themeTitleFrom(collection) {
-        $("#themeTitle").html(collection.title);
+        _id("themeTitle").innerHTML = collection.title;
+        // $("#themeTitle").html(collection.title);
       }
       //===============================================================
       //===============================================================
