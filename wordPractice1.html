@@ -404,7 +404,9 @@
       }
       /* --------------------------------------------------- */
       /* ================ Style for Test =======================*/
-
+      .show {
+        display: block
+      }
     </style>
 
     <script src="jquery-3.2.1.min.js"></script>
@@ -468,7 +470,7 @@
         "status": "wait", //one of wait|test|game|vie,
         "colorExposed": "#093",
         "handleMemoShow": null,
-        "showMemo": false,
+        "showMemo": true,
         "countZoneStaus": "hide",
         "heightOfInfoDiv": 0,
         "heightOfDefenceBase": 0,
@@ -773,6 +775,11 @@
       Collection.prototype.moveWords = function() {
         if(this.length() <= 0 && this.sourceCollection.length() <= 0) {
           gameControl("finished");
+          gameReset();
+          _id("btnGameControl").innerHTML = "Start Game";
+          _id("btnGameControl").onclick = function(){gameStart()};
+          $("#btnTestControl").show();
+          $("#keyInput").focus();
           return;
         }
         let missed = [];
@@ -1015,9 +1022,11 @@
         $("div.testArea").fadeOut(1000);
         $("#keyInput").focus();
         gameConfig.currentTest = null;
-        // gameConfig.currentIndex = 0;
         gameConfig.status = "wait";
-        // saveWordBOOKToLocalStorage();
+        _id("btnTestControl").innerHTML = "Start Test";
+        _id("btnTestControl").onclick = function(){testStart();};
+        $("#btnGameControl").show();
+
       }
       Test.prototype.isLeft = function() {
         return this.length() - this.current() - 1;
@@ -1054,6 +1063,7 @@
         }
         $("div.testExample").bind("click", function(){checkThisSelection(this);});
         this.currentProblem.timeStarted = new Date();
+        $("#keyInput").focus();
       }
       Test.prototype.showNextProblem = function() {
         if(this.isLeft()) {
@@ -1079,7 +1089,9 @@
         $("div.testArea").fadeOut(1000);
         $("#keyInput").focus();
         gameConfig.status = "wait";
-        // saveWordBOOKToLocalStorage();
+        _id("btnTestControl").innerHTML = "Start Test";
+        _id("btnTestControl").onclick = function(){testStart();};
+        $("#btnGameControl").show();
       }
       Test.prototype.typeIs = function(type) {
         this.type = type;
@@ -1214,13 +1226,10 @@
               $("#testQuestion").append("&nbsp;&nbsp;<button id='btnNextProblem' onclick='gameConfig.currentTest.showNextProblem();'>Next Problem</button>");
           } else {
             cp.wasHit = true;
-            // $("#testQuestion").append(`&nbsp;&nbsp;<button id="btnNextProblem" onclick='gameConfig.currentTest.showNextProblem();'>${cp.timeInterval/1000}</button> secs. left for next probelm.`)
             setTimeout(function(){gameConfig.currentTest.showNextProblem();}, gameConfig.testInterval);
-            // btnTimer();
           }
         }
-        // alert($(element).attr("word")+","+$(element).attr("wordindex"));
-        // let interval = (choice)? gameConfig.testInterval: gameConfig.correctInterval;
+        $("#keyInput").focus();
       }
       //===============================================================
       function showListOfWords(collection = gameConfig.currentViewCollection) {
@@ -1235,16 +1244,19 @@
         gameConfig.currentViewCollection.showListOfWords(gameConfig.collectionViewStyle);
         gameConfig.status = "view";
         _id("themeTitle").onclick = function(){hideListOfWords();};
+        $("#keyInput").focus();
       }
       function hideListOfWords() {
         _id("themeTitle").onclick = function(){showListOfWords();};
         gameConfig.status = "wait";
         $("#collection").fadeOut(200);
+        $("#keyInput").val('');
         $("#keyInput").focus();
       }
       //===============================================================
       function wordListTipHide(div) {
         $("#wordListTip").hide();
+        $("#keyInput").focus();
       }
       function wordListTipShow(div) {
         let word = gameConfig.currentViewCollection.findWord(div.innerHTML.trim());
@@ -1264,6 +1276,7 @@
           $("#wordListTip").css({"left": divp.left+"px", "top": (divp.top-$("#wordListTip").outerHeight(true)-4)+"px"});
           $("#wordListTip").show();
         }
+        $("#keyInput").focus();
       }
       function wordListTipShowHover(div) {
         let word = gameConfig.currentViewCollection.findWord(div.innerHTML.trim());
@@ -1279,6 +1292,7 @@
       function memoHide() {
         $(".memo").fadeOut(200);
         gameConfig.handleMemoShow = null;
+        $("#keyInput").focus();
       }
       function memoShow(word) {
         if(gameConfig.showMemo)
@@ -1291,7 +1305,7 @@
         if((x.toNumber()+memoWidth) > window.innerWidth)
           x = (window.innerWidth-memoWidth-5)+"px";
         $(".memo").css({"left": x, "top": y}).fadeIn(100);
-
+        $("#keyInput").focus();
       }
       function exposeThisRow(targetTR) {
         let titleWord = $(targetTR).attr("id").substr(3);
@@ -1302,6 +1316,7 @@
         $(targetTR.childNodes[0]).addClass("wordExposed");
         targetTR.childNodes[3].innerHTML=word.getESMP();
         targetTR.ondblclick = function(){editThisRow(this);};
+        $("#keyInput").focus();
       }
       function editFinished() {
         if(gameConfig.currentEditTR) {
@@ -1352,10 +1367,11 @@
 
         $("#keyInput").val('');
         $("#keyInput").attr('disabled', false);
+        $("#keyInput").focus();
 
       }
       //===============================================================
-      function pickAllWordsOf_wordBOOK() {
+      function pickAllWordsOfWordBOOK() {
         clearGameCollections()
         wordBOOK.searchAndCopyTo("", wordSource);
         let nt = `${wordBOOK.getTitle()} <span class="label-head-orange nanumGothic">전체</span> 단어`;
@@ -1364,6 +1380,85 @@
         wordSource.copyWordsTo(wordPicked);
         wordPicked.setTitle(nt);
         wordPicked.isCurrentViewCollection();
+      }
+      function gameStart() {
+        if(gameConfig.status === "view")
+          hideListOfWords();
+        if(gameConfig.currentViewCollection === wordBOOK)
+          pickAllWordsOfWordBOOK();
+        if(gameConfig.status === "game" || gameConfig.status === "wait") {
+          if(gameConfig.status === "wait")
+            countZoneControl("show");
+          $("#collection").fadeOut(200);
+          gameControl("go");
+          wordBase.showAll();
+          gameConfig.status = "game";
+        }
+        _id("btnGameControl").innerHTML = "Stop Game";
+        _id("btnGameControl").onclick = function(){gameStop()};
+        $("#btnTestControl").hide();
+        $("#keyInput").focus();
+      }
+      function gameStop() {
+        if(gameConfig.status === "game") {
+          wordBase.markMovingWords("");
+          gameControl("stop");
+          wordBase.hideAll();
+          $("#collection").fadeOut(200);
+          gameConfig.status = "wait";
+          countZoneControl("hide");
+          _id("btnGameControl").innerHTML = "Start Game";
+          _id("btnGameControl").onclick = function(){gameStart()};
+          $("#btnTestControl").show();
+          $("#keyInput").focus();
+        }
+      }
+      function gameReset() {
+        wordKilled.searchAndCopyTo("", wordSource);
+        wordKilled.clearWords();
+        wordMissed.searchAndCopyTo("", wordSource);
+        wordMissed.clearWords();
+        wordBase.searchAndCopyTo("", wordSource);
+        wordBase.clearWords();
+        gameControl("finished");
+        $("#collection").fadeOut(200);
+        countZoneControl("hide");
+        _id("btnGameControl").innerHTML = "Start Game";
+        _id("btnGameControl").onclick = function(){gameStart()};
+        $("#btnTestControl").show();
+        $("#keyInput").focus();
+        gameConfig.status = "wait";
+      }
+      function testStart(cmds1) {
+        if(gameConfig.status !== "wait")
+          return;
+        if(gameConfig.currentTest === null) {
+          if(gameConfig.currentViewCollection === wordBOOK)
+            pickAllWordsOfWordBOOK();
+          if(wordPicked.length() > 0) {
+            gameConfig.currentTest = new Test(wordPicked);
+            gameConfig.currentTest.startTest(cmds1);
+            _id("btnTestControl").innerHTML = "Stop Test";
+            _id("btnTestControl").onclick = function(){testStop();};
+            $("#btnGameControl").hide();
+            return;
+          } else {
+            return;
+          }
+        } else {
+          _id("btnTestControl").innerHTML = "Stop Test";
+          _id("btnTestControl").onclick = function(){testStop();};
+          $("#btnGameControl").hide();
+          gameConfig.currentTest.startTest(cmds1);
+        }
+      }
+      function testStop() {
+        if(gameConfig.status === "test") {
+          gameConfig.currentTest.suspendTest();
+          _id("btnTestControl").innerHTML = "Start Test";
+          _id("btnTestControl").onclick = function(){testStart();};
+          $("#btnGameControl").show();
+        }
       }
       function commandControl(cmd) {
         //빈 칸으로 split 후 빈칸만으로 된 요소는 제거함.
@@ -1383,19 +1478,9 @@
                       break;
           case "q": case "ㅂ": case "quit":
                       if(gameConfig.status === "test") {
-                        gameConfig.currentTest.suspendTest();
+                        testStop(cmds[1]);
                       } else if(gameConfig.status === "game") {
-                        // wordKilled.searchAndCopyTo("", wordSource);
-                        // wordKilled.clearWords();
-                        // wordMissed.searchAndCopyTo("", wordSource);
-                        // wordMissed.clearWords();
-                        // wordBase.searchAndCopyTo("", wordSource);
-                        // wordBase.clearWords();
-                        wordBase.markMovingWords("");
-                        gameControl("stop");
-                        wordBase.hideAll();
-                        $("#collection").fadeOut(200);
-                        gameConfig.status = "wait";
+                        gameStop();
                       }
                       countZoneControl("hide");
                       break;
@@ -1415,23 +1500,10 @@
                       } else if(gameConfig.status === "view") {
                         hideListOfWords();
                       }
+                      $("#keyInput").focus();
                       break;
           case "t": case "ㅅ": case "test":
-                      if(gameConfig.status !== "wait")
-                        return;
-                      if(gameConfig.currentTest === null) {
-                        if(gameConfig.currentViewCollection === wordBOOK)
-                          pickAllWordsOf_wordBOOK();
-                        if(wordPicked.length() > 0) {
-                          gameConfig.currentTest = new Test(wordPicked);
-                          gameConfig.currentTest.startTest(cmds[1]);
-                          return;
-                        } else {
-                          return;
-                        }
-                      } else {
-                        gameConfig.currentTest.startTest(cmds[1]);
-                      }
+                      testStart();
                       break;
           case "s": case "ㄴ": case "stop":
                       // if(gameConfig.status === "game") {
@@ -1439,30 +1511,11 @@
                       // }
                       break;
           case "g": case "ㅎ": case "go":
-                      if(gameConfig.status === "view")
-                        hideListOfWords();
-                      if(gameConfig.currentViewCollection === wordBOOK)
-                        pickAllWordsOf_wordBOOK();
-                      if(gameConfig.status === "game" || gameConfig.status === "wait") {
-                        if(gameConfig.status === "wait")
-                          countZoneControl("show");
-                        $("#collection").fadeOut(200);
-                        gameControl("go");
-                        wordBase.showAll();
-                        gameConfig.status = "game";
-                      }
+                      gameStart();
                       break;
           case "play again": case "pa":
                       if(gameConfig.status === "game" || gameConfig.status === "wait") {
-                        wordKilled.searchAndCopyTo("", wordSource);
-                        wordKilled.clearWords();
-                        wordMissed.searchAndCopyTo("", wordSource);
-                        wordMissed.clearWords();
-                        wordBase.searchAndCopyTo("", wordSource);
-                        wordBase.clearWords();
-                        $("#collection").fadeOut(200);
-                        gameConfig.status = "wait";
-                        // saveWordBOOKToLocalStorage();
+                        gameReset();
                       }
                       break;
           case "p": case "ㅔ": case "pick":
@@ -1588,6 +1641,18 @@
         } else {
           if(gameConfig.status === "game")
             wordBase.markMovingWords(value);
+          else if(gameConfig.status === "view") {
+            if(value.charAt(0) == '/')
+              return;
+            let prefix = (gameConfig.collectionViewStyle === "WordList")? "WL_" : "WT_";
+            if(prefix === "WT_"){
+              $(".tableWordRow").hide();
+              $(`[id^='WT_${value}']`).show();
+            } else {
+              $(".wordList").hide();
+              $(`[id^='WL_${value}']`).show();
+            }
+          }
         }
       }
       //===============================================================
@@ -1832,18 +1897,22 @@
                 <span class="bander-navy label-head nanumGothic" id="themeTitle" onclick="showListOfWords();">Theme Title</span>&nbsp;&nbsp;&nbsp;
                 <span class="label-head">Total:<span class="label-value" id="wordsTotal">0</span> words</span>
           </td>
+          <td style="text-align:left;">
+            <button id="btnGameControl" onclick="gameStart();" class="nanumgothic">Start Game</button>
+            <button id="btnTestControl" onclick="testStart();" class="nanumgothic">Start Test</button>
+          </td>
           <td style="text-align: right;">
             <div id="countZone" style="display:none;">
               <span class="bander-default nanumGothic" >
-                <span class="label-head "> Waiting:</span>
+                <span class="label-head ">Standby:</span>
                 <span class="label-value " id="wordsWaiting">-</span>
               </span>
               <span class="bander-default nanumGothic" >
-                <span class="label-head "> Catched:</span>
+                <span class="label-head ">Hit:</span>
                 <span class="label-value" id="wordsCatched">-</span>
               </span>
               <span class="bander-default nanumGothic" >
-                <span class="label-head "> Missed:</span>
+                <span class="label-head ">Miss:</span>
                 <span class="label-value " id="wordsMissed">-</span>
               </span>
             </div>
@@ -1856,9 +1925,9 @@
       <div class="testHead nanumGothic">
         <table width="100%">
           <tr>
-            <td>Problem: <span class="label-value" id="currentTurn"></span> of <span class="label-value-off" id="totalProblems"></span></td>
+            <td>Problem: <span class="label-value" id="currentTurn"></span> of <span class="label-value-off" id="totalProblems"></span> </td>
             <td width="50%" id="testTitle"></td>
-            <td></td>
+            <td><button style="float: right;" id='btnQuitTest' onclick='gameConfig.currentTest.suspendTest();'>Stop Test</button></td>
           </tr>
         </table>
       </div>
