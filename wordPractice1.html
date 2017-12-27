@@ -60,6 +60,17 @@
         font-weight: bold;
         color: #fc0;
       }
+      .label-mini-value {
+        border: 1px solid #99ceff;
+        border-radius: 3px;
+        background-color: #0069cc;
+        width: 20px;
+        padding-left: 3px;
+        padding-right: 3px;
+        color: #fc0;
+        display: inline-block;
+        text-align: right;
+      }
       .label-value-off {
         border: 1px solid #6387a8;
         border-radius: 5px;
@@ -106,7 +117,11 @@
         font-size: 11pt;
       }
       td.tableReserved, th.tableReserved {
-        width: 200px;
+        width: 250px;
+        display: none;
+      }
+      tr.tableWordRow:hover {
+        border: 1px solid blue;
       }
       th {
         background-color: darkgray;
@@ -155,6 +170,10 @@
         font-size: 12pt;
         line-height: 20px;
         padding: 3px;
+      }
+      #currentEditWord {
+        width: 98%;
+        font-size: 10pt;
       }
       /*#################### psho-css ###################*/
       button {
@@ -331,6 +350,59 @@
       button {
         font-size: 12pt;
       }
+      .miniLabel {
+        border: 1px solid red;
+        width: 45px;
+        height: 14px;
+        position: absolute;;
+        background-color: #f2522f;
+        color:white;
+        border-radius: 5px;
+        text-align: center;
+        font-size: 10pt;
+        padding-top: 1px;
+        top: 0;
+        left: 0;
+        margin-top: 8px;
+        margin-left: 200px;
+        display: none;
+      }
+      /* ------------------starting Logo----------------------- */
+      .logoContainer {
+         background-color: #3c7d4a;
+         position: relative;
+         width: 50%;
+         padding-top: 20%; /* 16:9 Aspect Ratio */
+         margin: auto;
+         border-radius: 30px;
+         top: 100px;
+         box-shadow: 10px 10px 35px #538b7a;
+         border: 1px solid white;
+      }
+
+      .logoText {
+         position:  absolute;
+         top: 0;
+         left: 0;
+         bottom: 0;
+         right: 0;
+         text-align: center;
+         font-size: 20px;
+         color: white;
+         padding: 30px;
+      }
+      #trashCan {
+        width: 150px;
+        height: 150px;
+        position: absolute;
+        bottom: 70px;
+      }
+      #wordNote {
+        position: absolute;;
+        bottom: 70px;
+        height: 150px;
+      }
+      /* --------------------------------------------------- */
       /* ================ Style for Test =======================*/
 
     </style>
@@ -339,6 +411,17 @@
     <script src="underscore-min.js"></script>
     <script src="wordBook4.js"></script>
     <script>
+      function WPUser(username, masterCollection) {
+        this.userName = username;
+      }
+      let wpUser = {
+        userName: "Word Practice User",
+        masterCollection: null,
+        finishedCollection: null,
+        dateStarted: null,
+        countStudy: 0,
+        dateLastStudy: null,
+      }
       //##########################################################################
       //Add "toNumber" method to String,   for "345px" => 345
       String.prototype.toNumber = function() {return parseInt(this);};
@@ -348,6 +431,9 @@
       //##########################################################################
       //---------------------------------------------------------------
       let wordBOOK = new Collection();  //Master Word Book
+      //~!~!~!~!~!~!~!~!~!~!~!~!~!~!~!~!~!~!~!~!~!~!~!~!~!!~!~!~
+      let wordFinished = new Collection("단어 휴지통", "trash"); // Words need not to study
+      //~!~!~!~!~!~!~!~!~!~!~!~!~!~!~!~!~!~!~!~!~!~!~!~!~!!~!~!~
       let wordKilled = new Collection("Words Catched");
       let wordPicked = new Collection("Words Picked from wordBOOK");
       let wordSource = new Collection("Words Waiting");
@@ -364,7 +450,7 @@
         "handleFetching": null,
         "hitColor": "#ffdddd",
         "notHitColor": "lightblue",
-        "defenceBaseTop": window.innerHeight,
+        "defenceBaseTop": 0,
         "downSpeed": {min: 15, max: 30},
         "startTop": 50,
         "warnningDistance": 255,
@@ -372,6 +458,7 @@
         "showCollectionTitle": null,
         "showCollectionList": null,
         "collectionViewStyle": "WordList",  // "WordList", "WordBook,
+        "previousViewCollection": null,
         "currentViewCollection": null,
         "currentTest": null,
         "currentProblem": null,
@@ -386,7 +473,14 @@
         "heightOfInfoDiv": 0,
         "heightOfDefenceBase": 0,
         "spaceControl": true,
-        "masterCollection": null
+        "masterCollection": null,
+        "referenceWidth": 1900,
+        "referencePoint": 60,
+        "referenceTextPoint": 20,
+        "draggedElement": null,
+        "draggedWord": null,
+        "currentEditTR": null,
+        "curentEditWord": null
       };
 
       //===============================================================
@@ -411,69 +505,94 @@
         this.moveToStart();
         this.hide();
       }
-      Word.prototype.get = function(propertyName) {
-        return this[propertyName];
+      Word.prototype.distanceToBottom = function(targetValue = gameConfig.defenceBaseTop) {
+        return targetValue - ($(this.div).css("top").toNumber() + $(this.div)[0].offsetHeight);
       }
       Word.prototype.exposed = function(c) { //현재 값이 필요하면 c에 true 입력
         return (c)? this.countExposed : ++this.countExposed;
+      }
+      Word.prototype.get = function(propertyName) {
+        return this[propertyName];
+      }
+      Word.prototype.getESMP = function() {
+        return `e:<div class="label-mini-value">${this.countExposed}</div>, s:<div class="label-mini-value">${this.scoreValue}</div>, m:<div class="label-mini-value">${this.countMissed}</div>, p:<div class="label-mini-value">${this.countPaired}</div>`;
+      }
+      Word.prototype.getPropertyFromSavedWord = function(savedWord) {
+        this.countExposed = savedWord.countExposed;
+        this.countMissed = savedWord.countMissed;
+        this.countPaired = savedWord.countPaired;
+        this.scoreValue = savedWord.scoreValue;
+      }
+      Word.prototype.hide = function() {
+        $(this.div).hide();
+      }
+      Word.prototype.hit = function() {
+        $(this.div).css('backgroundColor', gameConfig.hitColor);
+        $(this.div).fadeOut("fast");
+      }
+      Word.prototype.isCritical = function() {
+        let distance = this.distanceToBottom();
+        if(distance < gameConfig.warnningDistance) {
+          $(this.div).css("backgroundColor", `rgb(255, ${distance}, 255)`);
+          // $(this.div).css("color", `rgb(${255-distance}, ${255-distance}, ${255-distance})`);
+          if(distance < 127)
+            $(this.div).css("color", "white");
+        }
+        return distance;
+      }
+      Word.prototype.mark = function(substr, color) {
+        if(substr.trim().length > 0) {
+          if(this.distanceToBottom() < 127)
+            color = "#1cff00";
+          $(this.div).html(this.word.replace(substr,`<span style="color:${color};">${substr}</span>`));
+        } else {
+          $(this.div).html(this.word);
+        }
       }
       Word.prototype.missed = function(c) { //현재 값이 필요하면 c에 true 입력
         if(c == undefined)
           this.scoreValue--;
         return (c)? this.countMissed : ++this.countMissed;
       }
-      Word.prototype.score = function() {
-        return this.scoreValue;
-      }
-      Word.prototype.paired = function(c) {  //현재 값이 필요하면 c에 true 입력
-        if(c == undefined)
-          this.scoreValue++;
-        return (c)? this.countPaired : ++this.countPaired;
-      }
-      Word.prototype.moveToStart = function(defaultTop=gameConfig.startTop) {
-        let x = Math.floor(Math.random()*(window.innerWidth-gameConfig.boxWidth));
-        this.moveTo(x, defaultTop);
-      }
       Word.prototype.moveDown = function(targetValue = gameConfig.defenceBaseTop) {  // return targetValue - new top value
         let newTop = $(this.div).css("top").toNumber() + this.downSpeed;
         $(this.div).css("top", `${newTop}px`);
-      }
-      Word.prototype.isCritical = function() {
-        let distance = this.distanceToBottom();
-        if(distance < gameConfig.warnningDistance)
-          $(this.div).css("backgroundColor", `rgb(255, ${distance}, ${distance})`);
-        return distance;
       }
       Word.prototype.moveTo = function(x, y) {
         x = (String(x).search("px") < 0) ? x + "px" : x;
         y = (String(y).search("px") < 0) ? y + "px" : y;
         $(this.div).css({"left": x, "top": y});
       }
-      Word.prototype.hide = function() {
-        $(this.div).hide();
+      Word.prototype.moveToStart = function(defaultTop=gameConfig.startTop) {
+        let x = Math.floor(Math.random()*(window.innerWidth-gameConfig.boxWidth));
+        this.moveTo(x, defaultTop);
+      }
+      Word.prototype.paired = function(c) {  //현재 값이 필요하면 c에 true 입력
+        if(c == undefined)
+          this.scoreValue++;
+        return (c)? this.countPaired : ++this.countPaired;
+      }
+      Word.prototype.score = function() {
+        return this.scoreValue;
       }
       Word.prototype.show = function() {
         // $(this.div).css("backgroundColor", "lightblue");
         $(this.div).slideDown('fast');
-      }
-      Word.prototype.hit = function() {
-        $(this.div).css('backgroundColor', gameConfig.hitColor);
-        $(this.div).fadeOut("fast");
       }
       Word.prototype.showMemo = function(shower=memoShow, hider=memoHide, duration=2500) {
         clearTimeout(gameConfig.handleMemoShow);
         shower(this);
         gameConfig.handleMemoShow = setTimeout(function(){hider(this)}, duration);
       }
-      Word.prototype.mark = function(substr, color) {
-        if(substr.trim().length > 0) {
-          $(this.div).html(this.word.replace(substr,`<span style="color:${color};">${substr}</span>`));
-        } else {
-          $(this.div).html(this.word);
-        }
-      }
-      Word.prototype.distanceToBottom = function(targetValue = gameConfig.defenceBaseTop) {
-        return targetValue - ($(this.div).css("top").toNumber() + $(this.div)[0].offsetHeight);
+      Word.prototype.toString = function() {
+        let str = `{"word":"${this.word}",`;
+        str += `"pronunciation":"${this.pronunciation}",`;
+        str += `"memo":"${this.memo}",`;
+        str += `"countExposed":${this.countExposed},`;
+        str += `"countMissed":${this.countMissed},`;
+        str += `"countPaired":${this.countPaired},`;
+        str += `"scoreValue":${this.scoreValue}}`;
+        return str;
       }
       //===============================================================
       function Collection(title = "Word Collection", style = "store", sourceCollection) {
@@ -484,44 +603,69 @@
         this.currentMarkColor = null;
         this.handleMoving = null;
         this.handleFetching = null;
-        this.style = style;  // one of "move", "store"
+        this.style = style;  // one of "move", "store", "trash"
         this.targetToFetchOut = null;
         this.targetForMissed = null;  //Word.isCritical() < 0인 경우 보낼 colleciton
         this.sourceCollection = sourceCollection;
+        this.onEmptyToFetch = null;
+      }
+      Collection.prototype.onEmptyToFetchOut = function(callback) {
+        this.onEmptyToFetch = callback;
+      }
+      Collection.prototype.attachWords = function(targetElement) {
+        let wordList = "";
+        targetElement.innerHTML = "";
+        for(let word of this.words) {
+          if(word.score()>0) {
+            let k = $(`<div id='WL_${word.word}' draggable="true" ondragstart='dragStart(event);' ondragend="dragEnd(event);">${word.word}</div>`);
+            k.addClass("wordList wordPaired").appendTo(targetElement);
+          } else if (word.score()<0) {
+            let k = $(`<div id='WL_${word.word}' draggable="true" ondragstart='dragStart(event);' ondragend="dragEnd(event);">${word.word}</div>`);
+            k.addClass("wordList wordMissed nanumGothic").appendTo(targetElement);
+          } else if(word.exposed(true)){
+            let k = $(`<div id='WL_${word.word}' draggable="true" ondragstart='dragStart(event);' ondragend="dragEnd(event);">${word.word}</div>`);
+            k.addClass("wordList wordExposed nanumGothic").appendTo(targetElement);
+          } else {
+            let k = $(`<div id='WL_${word.word}' draggable="true" ondragstart='dragStart(event);' ondragend="dragEnd(event);">${word.word}</div>`);
+            k.addClass("wordList nanumGothic").appendTo(targetElement);
+          }
+        }
+        // targetElement.innerHTML = wordList;
+        $("div.wordList").mouseenter(function() {wordListTipShowHover(this);});
+        $("div.wordList").click(function() {wordListTipShow(this);});
+        $("div.wordList").mouseout(function() {wordListTipHide(this);});
+        // $("div.wordList").dblclick(function(){$(this).remove();});
 
       }
-      Collection.prototype.markMovingWords = function(substr, color="red") {
-        this.currentMark = substr;
-        this.currentMarkColor = color;
-        for(let word of this.words)
-          word.mark(this.currentMark, this.currentMarkColor);
-      }
-      Collection.prototype.setWordsExposed = function() {
-        for(let word of this.words)
-          word.exposed();
-      }
-      Collection.prototype.showLengthWith = function(element) {
-        this.wordCountShowList.push(element);
-      }
-      Collection.prototype.showLength = function() {
-        if(this.wordCountShowList.length > 0)
-          for(let e of this.wordCountShowList)
-            e.innerHTML = this.words.length;
-      }
-      Collection.prototype.isCurrentViewCollection = function() {
-        gameConfig.currentViewCollection = this;
-        themeTitleFrom(this);
-        if(gameConfig.masterCollection == this) {
-          $("#wordsTotal").html(gameConfig.masterCollection.length());
-        } else {
-          $("#wordsTotal").html(this.length() + '<span style="color:white;"> / </span>' + gameConfig.masterCollection.length());
+      Collection.prototype.attachWordsTable = function(targetElement) {
+        let wordTable = "<table class='tableWordList'><thead><th class='tableWord'>Word</th><th class='tablePronunciation'>Pronunciation</th><th class='tableMemo'>Memo</th><th class='tableReserved'>Reserved</th></thead><tbody>";
+        for(let  word of this.words) {
+          let info =word.getESMP();
+          if (word.score()<0) {
+            wordTable += `<tr id='WT_${word.word}' ondblclick='editThisRow(this);' draggable='true' ondragend="dragEnd(event);" ondragstart='dragStart(event);' class='tableWordRow'><td class='tableWord wordMissed nanumGothic';">${word.word}</td><td class='tablePronunciation'>[${word.pronunciation}]</td><td class='tableMemo nanumMyeongjo'>${word.memo}</td><td class="tableReserved">${info}</td></tr>`;
+          } else if (word.score()>0) {
+            wordTable += `<tr id='WT_${word.word}' ondblclick='editThisRow(this);' draggable='true' ondragend="dragEnd(event);" ondragstart='dragStart(event);' class='tableWordRow'><td class='tableWord wordPaired nanumGothic';">${word.word}</td><td class='tablePronunciation'>[${word.pronunciation}]</td><td class='tableMemo nanumMyeongjo'>${word.memo}</td><td class="tableReserved">${info}</td></tr>`;
+          } else if(word.exposed(true)) {
+            wordTable += `<tr id='WT_${word.word}' ondblclick='editThisRow(this);' draggable='true' ondragend="dragEnd(event);" ondragstart='dragStart(event);' class='tableWordRow'><td class='tableWord wordExposed nanumGothic';">${word.word}</td><td class='tablePronunciation'>[${word.pronunciation}]</td><td class='tableMemo nanumMyeongjo'>${word.memo}</td><td class="tableReserved">${info}</td></tr>`;
+          } else {
+            wordTable += `<tr id='WT_${word.word}' draggable='true' ondragend="dragEnd(event);" ondragstart='dragStart(event);' word='${word.word}' onclick='exposeThisRow(this);' class='tableWordRow'><td class='tableWord nanumGothic'>${word.word}</td><td class='tablePronunciation'>[${word.pronunciation}]</td><td class='tableMemo nanumMyeongjo'>?</td><td class="tableReserved">${info}</td></tr>`;
+          }
         }
+        wordTable += "</tbody> </table>";
+        targetElement.innerHTML = wordTable;
+        $("tr.tableWordRow:odd").css("backgroundColor", "#c4fccd");
+        $("tr.tableWordRow:even").css("backgroundColor", "#dfffdf");
       }
-      Collection.prototype.targetForMissedIs = function(collection) {
-        this.targetForMissed = collection;
+      Collection.prototype.clearWords = function() {
+        this.hideAll();
+        this.words = [];
+        this.showLength();
       }
-      Collection.prototype.targetToFetchOutIs = function(collection) {
-        this.targetToFetchOut = collection;
+      Collection.prototype.copyWordsTo = function(targetCollection, mode="clear") {
+        if(mode !== "append")
+          targetCollection.clearWords();
+        for(let aWord of this.words)
+          targetCollection.push(aWord);
       }
       Collection.prototype.fetchOutToDefault = function() {
         if(this.targetToFetchOut) {
@@ -530,28 +674,18 @@
             this.targetToFetchOut.push(word);
         }
       }
-      Collection.prototype.selectedLength = function(selector) {
-        return _.filter(this.words, (word)=>{return word.word.startsWith(selector)}).length;
-      }
-      Collection.prototype.searchAndCopyTo = function(selector, targetCollection) {
-        let selectedWords = _.filter(this.words, (word)=>{return word.word.startsWith(selector);})
-        for(let aWord of selectedWords)
-          targetCollection.push(aWord);
-      }
-      Collection.prototype.randomSelectAndCopyTo = function(count, targetCollection) {
-        if(count > this.words.length)
-          count = this.words.length;
-        let randomIndexToPick = randomSequence(this.words.length, count);
-        for(let i in randomIndexToPick)
-          targetCollection.push(this.words[randomIndexToPick[i]]);
-      }
-      Collection.prototype.startFetching = function() {
-        this.fetchOutToDefault();
-        this.handleFetching = setInterval(this.fetchOutToDefault.bind(this), gameConfig.fetchSpeed);
-      }
-      Collection.prototype.stopFetching = function() {
-        clearInterval(this.handleFetching);
-        this.handleFetching = null;
+      Collection.prototype.fetchOutToMissed = function(aWord) {
+        let index = -1;
+        if(this.words.length) {
+          for(index = 0; index < this.words.length; index++) {
+            if(this.words[index].word == aWord.word) {
+              aWard = this.words.splice(index,1)[0];
+              this.showLength();
+              this.targetForMissed.push(aWord);
+              return;
+            }
+          }
+        }
       }
       Collection.prototype.findAndFetchToDefault = function(str) {
         if(this.targetToFetchOut) {
@@ -569,64 +703,42 @@
           }
         }
       }
-      Collection.prototype.pickUp = function(aWord) {
-        if(aWord) { //aWord가 null이 아닌 경우에만 처리
-          this.words.push(aWord);
-          this.showLength();
-          aWord.hit();
-          //Memo 기능 처리 코드
-          // memoShow(aWord);
-          // setTimeout(function(){memoHide(aWord)}, 1500);
-        }
-      }
-      Collection.prototype.push = function(aWord) {
-        if(aWord) { //aWord가 null이 아닌 경우에만 처리
-          this.words.push(aWord);
-          this.showLength();
-          if(this.style == "move") {
-            $(aWord.div).css("backgroundColor", gameConfig.notHitColor);
-            aWord.moveToStart();
-            aWord.show();
-            aWord.mark(this.currentMark, this.currentMarkColor);
+      Collection.prototype.findAndPick = function(strWord) {
+        for(let i in this.words) {
+          if(this.words[i].word == strWord) {
+            let word = this.words.splice(i, 1)[0];
+            this.showLength();
+            return word;
           }
-          else
-            aWord.hide();
         }
+        return null;
       }
-      Collection.prototype.copyWordsTo = function(targetCollection, mode="clear") {
-        if(mode !== "append")
-          targetCollection.clearWords();
-        for(let aWord of this.words)
-          targetCollection.push(aWord);
-      }
-      Collection.prototype.styleIs = function(style) {
-        if(style == "move") {
-          this.style = style;
-          this.showAll();
-        } else {
-          this.style = "store";
-          this.hideAll();
+      Collection.prototype.findWord = function(str) {
+        for(let i in this.words) {
+          if(this.words[i].word == str)
+            return this.words[i];
         }
+        return null;
       }
-      Collection.prototype.setTitle = function(newTitle) {
-        this.title = newTitle;
+      Collection.prototype.findWordAndGetMemo = function(str) {
+        let word = this.findWord(str);
+        return (word)? word.memo : '';
       }
       Collection.prototype.getTitle = function() {
         return this.title;
       }
-      Collection.prototype.shift = function() {
-        let word = this.words.shift();
-        this.showLength();
-        return word;
+      Collection.prototype.hideAll = function() {
+        for(let word of this.words)
+          word.hide();
       }
-      Collection.prototype.popRandom = function() {
-        if(this.words.length) {
-          let picker = Math.floor(this.words.length * Math.random());
-          let word = this.words.splice(picker, 1)[0];
-          this.showLength();
-          return word;
+      Collection.prototype.isCurrentViewCollection = function() {
+        gameConfig.currentViewCollection = this;
+        themeTitleFrom(this);
+        if(gameConfig.masterCollection == this) {
+          $("#wordsTotal").html(gameConfig.masterCollection.length());
         } else {
-          return null;
+          $("#wordsTotal").html(this.length());
+          // $("#wordsTotal").html(this.length() + '<span style="color:white;"> / </span>' + gameConfig.masterCollection.length());
         }
       }
       Collection.prototype.length = function() {
@@ -652,93 +764,11 @@
           this.showLength();
         }
       }
-      Collection.prototype.showAll = function() {
+      Collection.prototype.markMovingWords = function(substr, color="red") {
+        this.currentMark = substr;
+        this.currentMarkColor = color;
         for(let word of this.words)
-          word.show();
-      }
-      Collection.prototype.hideAll = function() {
-        for(let word of this.words)
-          word.hide();
-      }
-      Collection.prototype.stringHeader = function(targetElement) {
-        let header =  `<span>Title: [<b>${this.title}</b>] &nbsp;&nbsp;<span style="font-size:12pt">(<span class="numberDisplay">${this.words.length}</span>) words.</span></span>`;
-        targetElement.innerHTML = header;
-      }
-      Collection.prototype.attachWords = function(targetElement) {
-        let wordList = "";
-        targetElement.innerHTML = "";
-        for(let word of this.words) {
-          if(word.score()>0) {
-            let k = $(`<div>${word.word}</div>`);
-            k.addClass("wordList wordPaired").appendTo(targetElement);
-          } else if (word.score()<0) {
-            let k = $(`<div>${word.word}</div>`);
-            k.addClass("wordList wordMissed nanumGothic").appendTo(targetElement);
-          } else if(word.exposed(true)){
-            let k = $(`<div>${word.word}</div>`);
-            k.addClass("wordList wordExposed nanumGothic").appendTo(targetElement);
-          } else {
-            let k = $(`<div>${word.word}</div>`);
-            k.addClass("wordList nanumGothic").appendTo(targetElement);
-          }
-        }
-        // targetElement.innerHTML = wordList;
-        $("div.wordList").click(function() {wordListTipShow(this);});
-        $("div.wordList").mouseout(function() {wordListTipHide(this);});
-        // $("div.wordList").dblclick(function(){$(this).remove();});
-
-      }
-      Collection.prototype.attachWordsTable = function(targetElement) {
-        let wordTable = "<table class='tableWordList'><thead><th class='tableWord'>Word</th><th class='tablePronunciation'>Pronunciation</th><th class='tableMemo'>Memo</th><th class='tableReserved'>Reserved</th></thead><tbody>";
-        for(let  word of this.words) {
-          if (word.score()<0) {
-            wordTable += `<tr class='tableWordRow'><td class='tableWord wordMissed nanumGothic';">${word.word}</td><td class='tablePronunciation'>[${word.pronunciation}]</td><td class='tableMemo nanumMyeongjo'>${word.memo}</td><td class"tableReserved"> </td></tr>`;
-          } else if (word.score()>0) {
-            wordTable += `<tr class='tableWordRow'><td class='tableWord wordPaired nanumGothic';">${word.word}</td><td class='tablePronunciation'>[${word.pronunciation}]</td><td class='tableMemo nanumMyeongjo'>${word.memo}</td><td class"tableReserved"> </td></tr>`;
-          } else if(word.exposed(true)) {
-            wordTable += `<tr class='tableWordRow'><td class='tableWord wordExposed nanumGothic';">${word.word}</td><td class='tablePronunciation'>[${word.pronunciation}]</td><td class='tableMemo nanumMyeongjo'>${word.memo}</td><td class"tableReserved"> </td></tr>`;
-          } else {
-            wordTable += `<tr word='${word.word}' onclick='exposeThisRow(this);' class='tableWordRow'><td class='tableWord nanumGothic'>${word.word}</td><td class='tablePronunciation'>[${word.pronunciation}]</td><td class='tableMemo nanumMyeongjo'>?</td><td class"tableReserved"> </td></tr>`;
-          }
-        }
-        wordTable += "</tbody> </table>";
-        targetElement.innerHTML = wordTable;
-        $("tr.tableWordRow:odd").css("backgroundColor", "#c4fccd");
-        $("tr.tableWordRow:even").css("backgroundColor", "#dfffdf");
-      }
-      Collection.prototype.showListOfWords = function(showType = gameConfig.collectionViewStyle) {
-        if(this.words.length) {
-          this.sortByWords();
-          // this.stringHeader(gameConfig.showCollectionTitle);
-          if(showType == "WordList") {
-            gameConfig.collectionViewStyle = showType;
-            this.attachWords(gameConfig.showCollectionList);
-            $("#btnWordList").hide();
-            $("#btnWordBook").show();
-          }
-          else {
-            gameConfig.collectionViewStyle = showType;
-            this.attachWordsTable(gameConfig.showCollectionList);
-            $("#btnWordList").show();
-            $("#btnWordBook").hide();
-          }
-          $(gameConfig.showCollectionBody).show();
-        } else {
-          $(gameConfig.showCollectionBody).hide();
-        }
-      }
-      Collection.prototype.fetchOutToMissed = function(aWord) {
-        let index = -1;
-        if(this.words.length) {
-          for(index = 0; index < this.words.length; index++) {
-            if(this.words[index].word == aWord.word) {
-              aWard = this.words.splice(index,1)[0];
-              this.showLength();
-              this.targetForMissed.push(aWord);
-              return;
-            }
-          }
-        }
+          word.mark(this.currentMark, this.currentMarkColor);
       }
       Collection.prototype.moveWords = function() {
         if(this.length() <= 0 && this.sourceCollection.length() <= 0) {
@@ -761,10 +791,137 @@
           }
         }// end of outer if
       }// end of function
+      Collection.prototype.pickUp = function(aWord) {
+        if(aWord) { //aWord가 null이 아닌 경우에만 처리
+          this.words.push(aWord);
+          this.showLength();
+          aWord.hit();
+          //Memo 기능 처리 코드
+          // memoShow(aWord);
+          // setTimeout(function(){memoHide(aWord)}, 1500);
+        }
+      }
+      Collection.prototype.popRandom = function() {
+        if(this.words.length) {
+          let picker = Math.floor(this.words.length * Math.random());
+          let word = this.words.splice(picker, 1)[0];
+          this.showLength();
+          return word;
+        } else {
+          return null;
+        }
+      }
+      Collection.prototype.push = function(aWord) {
+        if(aWord) { //aWord가 null이 아닌 경우에만 처리
+          //새 단어가 기존 단어들과 중복되는지 체크한다. 중복되면 return false
+          if(_.find(this.words, function(a) { return a.word === aWord.word; })){
+            console.log(`Collection:[${this.title}]: pushing a new word[${aWord.word}] is rejected on duplication.`);
+            return false; //새 단어 등록 거절.
+          }
+          this.words.push(aWord);
+          this.showLength();
+          if(this.style == "move") {
+            $(aWord.div).css("backgroundColor", gameConfig.notHitColor);
+            aWord.moveToStart();
+            aWord.show();
+            aWord.mark(this.currentMark, this.currentMarkColor);
+          }
+          else
+            aWord.hide();
+          return true;
+        }
+        return false;
+      }
+      Collection.prototype.randomSelectAndCopyTo = function(count, targetCollection) {
+        if(count > this.words.length)
+          count = this.words.length;
+        let randomIndexToPick = randomSequence(this.words.length, count);
+        for(let i in randomIndexToPick)
+          targetCollection.push(this.words[randomIndexToPick[i]]);
+      }
+      Collection.prototype.searchAndCopyTo = function(selector, targetCollection) {
+        let selectedWords = _.filter(this.words, (word)=>{return word.word.startsWith(selector);})
+        for(let aWord of selectedWords)
+          targetCollection.push(aWord);
+      }
+      Collection.prototype.selectedLength = function(selector) {
+        return _.filter(this.words, (word)=>{return word.word.startsWith(selector)}).length;
+      }
+      Collection.prototype.setTitle = function(newTitle) {
+        this.title = newTitle;
+      }
+      Collection.prototype.shift = function() {
+        let word = this.words.shift();
+        this.showLength();
+        return word;
+      }
+      Collection.prototype.showAll = function() {
+        for(let word of this.words)
+          word.show();
+      }
+      Collection.prototype.showLength = function(element) {
+        if(element) {
+          this.wordCountShowList.push(element);
+        } else {
+          if(this.wordCountShowList.length > 0)
+            for(let e of this.wordCountShowList)
+              e.innerHTML = this.words.length;
+        }
+        if(this.style==="trash")
+          $("#trashCount").text(this.words.length);
+
+        if(gameConfig.currentViewCollection)
+          gameConfig.currentViewCollection.isCurrentViewCollection();
+      }
+      Collection.prototype.showListOfWords = function(showType = gameConfig.collectionViewStyle) {
+        if(this.words.length) {
+          if(this.style === "trash")
+            $("#collection").css("backgroundColor","#ff9c71");
+          else {
+            $("#collection").css("backgroundColor","#eeffaa");
+          }
+          this.sortByWords();
+          if(showType == "WordList") {
+            gameConfig.collectionViewStyle = showType;
+            this.attachWords(gameConfig.showCollectionList);
+            $("#btnWordList").hide();
+            $("#btnWordBook").show();
+          }
+          else {
+            gameConfig.collectionViewStyle = showType;
+            this.attachWordsTable(gameConfig.showCollectionList);
+            $("#btnWordList").show();
+            $("#btnWordBook").hide();
+          }
+          if(wordFinished.length()){
+            if(gameConfig.previousViewCollection)
+              $("#trashCanControl").html(`Close Trash Can <span id="trashCount" class="label-mini-value">${wordFinished.length()}</span>`);
+            else
+              $("#trashCanControl").html(`View Trash Can <span id="trashCount" class="label-mini-value">${wordFinished.length()}</span>`);
+            $("#trashCanControl").show();
+          }
+          else
+            $("#trashCanControl").hide();
+          $(gameConfig.showCollectionBody).show();
+        } else {
+          $(gameConfig.showCollectionBody).hide();
+        }
+      }
+      Collection.prototype.sortByWords = function() {
+        this.words.sort(function(a, b) { if(a.word > b.word) return 1; else if(a.word === b.word) return 0; else return -1;});
+      }
+      Collection.prototype.startFetching = function() {
+        this.fetchOutToDefault();
+        this.handleFetching = setInterval(this.fetchOutToDefault.bind(this), gameConfig.fetchSpeed);
+      }
       Collection.prototype.startMoving = function() {
         this.moveWords();
         if(this.style == "move")
           this.handleMoving = setInterval(this.moveWords.bind(this), gameConfig.clockSpeed);
+      }
+      Collection.prototype.stopFetching = function() {
+        clearInterval(this.handleFetching);
+        this.handleFetching = null;
       }
       Collection.prototype.stopMoving = function() {
         if(this.style == "move") {
@@ -772,34 +929,39 @@
           this.handleMoving = null;
         }
       }
-      Collection.prototype.findWord = function(str) {
-        for(let i in this.words) {
-          if(this.words[i].word == str)
-            return this.words[i];
+      Collection.prototype.stringHeader = function(targetElement) {
+        let header =  `<span>Title: [<b>${this.title}</b>] &nbsp;&nbsp;<span style="font-size:12pt">(<span class="numberDisplay">${this.words.length}</span>) words.</span></span>`;
+        targetElement.innerHTML = header;
+      }
+      Collection.prototype.styleIs = function(style) {
+        if(style == "move") {
+          this.style = style;
+          this.showAll();
+        } else {
+          this.style = "store";
+          this.hideAll();
         }
-        return null;
       }
-      Collection.prototype.findWordAndGetMemo = function(str) {
-        let word = this.findWord(str);
-        return (word)? word.memo : '';
+      Collection.prototype.targetForMissedIs = function(collection) {
+        this.targetForMissed = collection;
       }
-      Collection.prototype.findAndPick = function(strWord) {
-        for(let i in this.words) {
-          if(this.words[i].word == strWord) {
-            let word = this.words.splice(i, 1)[0];
-            this.showLength();
-            return word;
-          }
+      Collection.prototype.targetToFetchOutIs = function(collection) {
+        this.targetToFetchOut = collection;
+      }
+      Collection.prototype.toString = function() {
+        let dateSaved = new Date().toString();
+        let str = `{ "title": "${this.title}",`;
+        str += `"userName": "wordPracticeUser",`;
+        str += `"dateSaved": "${dateSaved}",`;
+        str += `"words": [`;
+        if(this.words.length) {
+          for(let i=0; i<this.words.length-1; i++)
+              str += this.words[i].toString() + ","
+          str += this.words[this.words.length-1].toString() + "]}";
+        } else {
+          str += "]}";
         }
-        return null;
-      }
-      Collection.prototype.clearWords = function() {
-        this.hideAll();
-        this.words = [];
-        this.showLength();
-      }
-      Collection.prototype.sortByWords = function() {
-        this.words.sort(function(a, b) { if(a.word > b.word) return 1; else if(a.word === b.word) return 0; else return -1;});
+        return str;
       }
       //===============================================================
       function Problem(index, collection) {
@@ -846,20 +1008,8 @@
         }
         this.dateCreated = (new Date()).toString();
       }
-      Test.prototype.length = function() {
-        return this.problems.length;
-      }
-      Test.prototype.typeIs = function(type) {
-        this.type = type;
-      }
-      Test.prototype.startTest = function(type="word") {
-        gameConfig.status = "test";
-        if(type)
-          this.type = type;
-        $("#currentTurn").html(1);
-        $("#totalProblems").html(this.length());
-        this.showNextProblem();
-        $("div.testArea").slideDown(1000);
+      Test.prototype.current = function(type="index") {  //or "problem" for object
+        return (type === "index")? this.currentIndex : this.currentProblem;
       }
       Test.prototype.finishTest = function() {
         $("div.testArea").fadeOut(1000);
@@ -867,13 +1017,13 @@
         gameConfig.currentTest = null;
         // gameConfig.currentIndex = 0;
         gameConfig.status = "wait";
+        // saveWordBOOKToLocalStorage();
       }
-      Test.prototype.suspendTest = function() {
-        //문제를 푸는 중에 중단하였으므로 진행 중이던 문제부터 다음에 풀 수 있도록 인덱스 조정
-        this.currentProblem = this.problems[--this.currentIndex];
-        $("div.testArea").fadeOut(1000);
-        $("#keyInput").focus();
-        gameConfig.status = "wait";
+      Test.prototype.isLeft = function() {
+        return this.length() - this.current() - 1;
+      }
+      Test.prototype.length = function() {
+        return this.problems.length;
       }
       Test.prototype.showAProblem = function(problemIndex) {
         this.currentProblem = this.problems[problemIndex];
@@ -905,12 +1055,6 @@
         $("div.testExample").bind("click", function(){checkThisSelection(this);});
         this.currentProblem.timeStarted = new Date();
       }
-      Test.prototype.current = function(type="index") {  //or "problem" for object
-        return (type === "index")? this.currentIndex : this.currentProblem;
-      }
-      Test.prototype.isLeft = function() {
-        return this.length() - this.current() - 1;
-      }
       Test.prototype.showNextProblem = function() {
         if(this.isLeft()) {
           this.showAProblem(this.current()+1);
@@ -919,6 +1063,26 @@
           this.finishTest();
           return false;
         }
+      }
+      Test.prototype.startTest = function(type="word") {
+        gameConfig.status = "test";
+        if(type)
+          this.type = type;
+        $("#currentTurn").html(1);
+        $("#totalProblems").html(this.length());
+        this.showNextProblem();
+        $("div.testArea").slideDown(1000);
+      }
+      Test.prototype.suspendTest = function() {
+        //문제를 푸는 중에 중단하였으므로 진행 중이던 문제부터 다음에 풀 수 있도록 인덱스 조정
+        this.currentProblem = this.problems[--this.currentIndex];
+        $("div.testArea").fadeOut(1000);
+        $("#keyInput").focus();
+        gameConfig.status = "wait";
+        // saveWordBOOKToLocalStorage();
+      }
+      Test.prototype.typeIs = function(type) {
+        this.type = type;
       }
       //===============================================================
       function gameSpeed(value, element) {
@@ -1070,25 +1234,23 @@
         //이후에 필요한 처리를 한다.
         gameConfig.currentViewCollection.showListOfWords(gameConfig.collectionViewStyle);
         gameConfig.status = "view";
-        // _id("themeTitle").onclick = hideListOfWords;
+        _id("themeTitle").onclick = function(){hideListOfWords();};
       }
       function hideListOfWords() {
+        _id("themeTitle").onclick = function(){showListOfWords();};
         gameConfig.status = "wait";
         $("#collection").fadeOut(200);
         $("#keyInput").focus();
-        // _id("themeTitle").onclick = showListOfWords;
       }
       //===============================================================
       function wordListTipHide(div) {
-        // $(div).css({"cursor": "auto"});
         $("#wordListTip").hide();
       }
       function wordListTipShow(div) {
-        let word = wordBOOK.findWord(div.innerHTML.trim());
+        let word = gameConfig.currentViewCollection.findWord(div.innerHTML.trim());
         if(word) {
           word.exposed();
           $(div).addClass("wordExposed");
-          // $(div).css({"cursor": "e-resize"});
           let divp = $(div).position();
           let tip = `<span class="nanumGothic" style="font-size:13pt;color:blue;font-weight:bold;">${word.word}</span>`;
           tip += `&nbsp;<span class="pronunciation">[${word.pronunciation}]</span><hr /><span class="nanumMyeongjo">${word.memo}</span>`;
@@ -1101,6 +1263,16 @@
 
           $("#wordListTip").css({"left": divp.left+"px", "top": (divp.top-$("#wordListTip").outerHeight(true)-4)+"px"});
           $("#wordListTip").show();
+        }
+      }
+      function wordListTipShowHover(div) {
+        let word = gameConfig.currentViewCollection.findWord(div.innerHTML.trim());
+        if(word) {
+          if(word.exposed(true)) {
+            wordListTipShow(div);
+          } else {
+            return;
+          }
         }
       }
       //===============================================================
@@ -1122,14 +1294,77 @@
 
       }
       function exposeThisRow(targetTR) {
-        let titleWord = $(targetTR).attr("word");
+        let titleWord = $(targetTR).attr("id").substr(3);
         let word = wordBOOK.findWord(titleWord);
         let memoTD = targetTR.childNodes[2];
         word.exposed();
         $(memoTD).html(word.memo);
         $(targetTR.childNodes[0]).addClass("wordExposed");
+        targetTR.childNodes[3].innerHTML=word.getESMP();
+        targetTR.ondblclick = function(){editThisRow(this);};
+      }
+      function editFinished() {
+        if(gameConfig.currentEditTR) {
+          gameConfig.currentEditTR.ondblclick = function(){editThisRow(this);};
+          gameConfig.currentEditWord.memo = $("#currentEditWord").val();
+          let memoTD = gameConfig.currentEditTR.childNodes[2];
+          memoTD.innerHTML = gameConfig.currentEditWord.memo;
+          gameConfig.currentEditWord = null;
+          //exposeThisRow(gameConfig.currentEditTR);
+          gameConfig.currentEditTR = null;
+        }
+      }
+      function editThisRow(targetTR) {
+        targetTR.ondblclick = null;
+        gameConfig.currentEditTR = targetTR;
+        let titleWord = $(targetTR).attr("id").substr(3);
+        if(gameConfig.previousViewCollection)
+          gameConfig.currentEditWord = wordFinished.findWord(titleWord);
+        else
+          gameConfig.currentEditWord = wordBOOK.findWord(titleWord);
+        let memoTD = targetTR.childNodes[2];
+        let memoHTML = `<input onblur="editFinished();" id="currentEditWord" class="nanumMyeongjo" value="${gameConfig.currentEditWord.memo}" />`;
+        $(memoTD).html(memoHTML);
+        $("#currentEditWord").attr("disabled", false);
+        $("#currentEditWord").focus();
+      }
+      function showTrashCan() {
+        if(wordFinished.length() <= 0)
+        {
+          alert("단어 휴지통이 비어 있습니다.");
+          return;
+        }
+        gameConfig.previousViewCollection = gameConfig.currentViewCollection;
+        wordFinished.isCurrentViewCollection();
+        showListOfWords();
+        $("#trashCanControl").html(`Close Trash Can <span id="trashCount" class="label-mini-value">${wordFinished.length()}</span>`);
+        $("#trashCanControl")[0].onclick = function(){hideTrashCan();};
+
+        $("#keyInput").val('Close trash can first~!');
+        $("#keyInput").attr('disabled', true);
+      }
+      function hideTrashCan() {
+        gameConfig.previousViewCollection.isCurrentViewCollection();
+        showListOfWords();
+        gameConfig.previousViewCollection = null;
+        $("#trashCanControl").html(`View Trash Can <span id="trashCount" class="label-mini-value">${wordFinished.length()}</span>`);
+        $("#trashCanControl")[0].onclick = function(){showTrashCan();};
+
+        $("#keyInput").val('');
+        $("#keyInput").attr('disabled', false);
+
       }
       //===============================================================
+      function pickAllWordsOf_wordBOOK() {
+        clearGameCollections()
+        wordBOOK.searchAndCopyTo("", wordSource);
+        let nt = `${wordBOOK.getTitle()} <span class="label-head-orange nanumGothic">전체</span> 단어`;
+        wordSource.setTitle(nt);
+        themeTitleFrom(wordSource);
+        wordSource.copyWordsTo(wordPicked);
+        wordPicked.setTitle(nt);
+        wordPicked.isCurrentViewCollection();
+      }
       function commandControl(cmd) {
         //빈 칸으로 split 후 빈칸만으로 된 요소는 제거함.
         let cmds = _.map(cmd.split(" "), (x)=>{return x.trim();}).filter((x)=>{return x.length;});
@@ -1168,7 +1403,6 @@
                       hideListOfWords();
                       clearGameCollections();
                       wordBOOK.isCurrentViewCollection();
-                      // gameConfig.currentTest.finishTest();
                       gameConfig.status = "wait";
                       countZoneControl("hide");
                       break;
@@ -1177,10 +1411,6 @@
                       break;
           case "v": case "ㅍ": case "view":
                       if(gameConfig.status === "wait") {
-                        wordKilled.searchAndCopyTo("", wordSource);
-                        wordKilled.clearWords();
-                        wordMissed.searchAndCopyTo("", wordSource);
-                        wordMissed.clearWords();
                         showListOfWords();
                       } else if(gameConfig.status === "view") {
                         hideListOfWords();
@@ -1190,6 +1420,8 @@
                       if(gameConfig.status !== "wait")
                         return;
                       if(gameConfig.currentTest === null) {
+                        if(gameConfig.currentViewCollection === wordBOOK)
+                          pickAllWordsOf_wordBOOK();
                         if(wordPicked.length() > 0) {
                           gameConfig.currentTest = new Test(wordPicked);
                           gameConfig.currentTest.startTest(cmds[1]);
@@ -1207,12 +1439,16 @@
                       // }
                       break;
           case "g": case "ㅎ": case "go":
+                      if(gameConfig.status === "view")
+                        hideListOfWords();
+                      if(gameConfig.currentViewCollection === wordBOOK)
+                        pickAllWordsOf_wordBOOK();
                       if(gameConfig.status === "game" || gameConfig.status === "wait") {
                         if(gameConfig.status === "wait")
                           countZoneControl("show");
+                        $("#collection").fadeOut(200);
                         gameControl("go");
                         wordBase.showAll();
-                        $("#collection").fadeOut(200);
                         gameConfig.status = "game";
                       }
                       break;
@@ -1226,9 +1462,12 @@
                         wordBase.clearWords();
                         $("#collection").fadeOut(200);
                         gameConfig.status = "wait";
+                        // saveWordBOOKToLocalStorage();
                       }
                       break;
           case "p": case "ㅔ": case "pick":
+                      if(gameConfig.status === "view")
+                        hideListOfWords();
                       if(gameConfig.status === "wait") {
                         let sel = '';
                         if(cmds.length < 2) {
@@ -1278,10 +1517,50 @@
                         }
                       }
                       break;
+          case "save":
+                      saveWordBOOKToLocalStorage();
+                      break;
+          case "r": case "reserved":
+                      $(".tableReserved").toggle();
         }
       }
+      function saveWordBOOKToLocalStorage() {
+        let saveStr = wordBOOK.toString();
+        localStorage.setItem("wordBOOK", saveStr);
+        saveStr = wordFinished.toString();
+        localStorage.setItem("wordFinished", saveStr);
+        alert("wordBOOK, wordFinished saved.")
+      }
+      function getWordBOOKFromLocalStorage() {
+        let saveStr = localStorage.getItem("wordBOOK");
+        let savedWordBOOK = JSON.parse(saveStr);
+        if(saveStr) {
+          let msg = `현재 사용 중인 컴퓨터에 저장되어 있는 단어장 [${savedWordBOOK.title}]이 있습니다. 저장된 단어장을 사용하시겠습니까?`;
+          let result = confirm(msg);
+          if(result == false)
+            return false;
+          else {
+            wordBOOK.setTitle(savedWordBOOK.title);
+            for(let aSavedWord of savedWordBOOK.words) {
+              let aNewWord = new Word(aSavedWord.word, aSavedWord.memo, aSavedWord.pronunciation);
+              aNewWord.getPropertyFromSavedWord(aSavedWord);
+              wordBOOK.push(aNewWord);
+            }// end of for loop
+            let finishedStr = localStorage.getItem("wordFinished");
+            if(finishedStr) {
+              let savedFinishedBook = JSON.parse(finishedStr);
+              for(let aWord of savedFinishedBook.words) {
+                let aFinishedWord = new Word(aWord.word, aWord.memo, aWord.pronunciation);
+                aFinishedWord.getPropertyFromSavedWord(aWord);
+                wordFinished.push(aFinishedWord);
+              }
+            }
+            return true;
+          }  // end of else of if(result == false)
+        } // end of if(saveStr)
+      }
       function inputControl() {
-        let input = document.getElementById('keyInput');
+        let input = _id('keyInput');
         let value = input.value.trim();
         if(value[0] == '/') {
           $("#keyInput").css("backgroundColor", "#fec3c3");
@@ -1349,6 +1628,110 @@
         setTimeout(function(){clearInterval(handle);}, gameConfig.testInterval);
       }
       //===============================================================
+      function dragStart(ev) {
+        ev.dataTransfer.setData("text", ev.target.id);
+        gameConfig.draggedElement = ev.target;
+        if(gameConfig.previousViewCollection)
+          gameConfig.draggedWord = wordFinished.findWord(ev.target.id.substr(3));
+        else
+          gameConfig.draggedWord = wordBOOK.findWord(ev.target.id.substr(3));
+
+        wordListTipHide(ev.target);
+        if(gameConfig.previousViewCollection)
+          $("#wordNote").show(300);
+        else
+          $("#trashCan").show(300);
+      }
+      function dragAllowDrop(ev) {
+        ev.preventDefault();
+      }
+      function dragEnd(ev) {
+        $("#wordNote").hide(500);
+        $("#trashCan").hide(500);
+        $("#wordNote").attr("src", "./image/greenBookNormal.png");
+        $("#trashCan").attr("src", "./image/trash_can_close.png");
+        gameConfig.draggedElement = null;
+        gameConfig.draggedWord = null
+      }
+      function dragEnter(ev) {
+        if(gameConfig.previousViewCollection) {
+          $("#wordNote").attr("src", "./image/greenBookDrop.png");
+        } else {
+          if(gameConfig.draggedWord.exposed(true) <= 0 || gameConfig.draggedWord.score()<0)
+            $("#trashCan").attr("src", "./image/trash_can_close_tightly.png");
+          else
+            $("#trashCan").attr("src", "./image/trash_can_open.png");
+        }
+      }
+      function dragLeave(ev) {
+        if(gameConfig.previousViewCollection)
+          $("#wordNote").attr("src", "./image/greenBookNormal.png");
+        else
+          $("#trashCan").attr("src", "./image/trash_can_close.png");
+      }
+      function dragDrop(ev) {
+        ev.preventDefault();
+        let wordStr = ev.dataTransfer.getData("text").substr(3);
+        let dispType = ev.dataTransfer.getData("texxt").substr(0,2);
+        if(gameConfig.previousViewCollection){
+          if(gameConfig.draggedWord === null) {
+            $("#wordNote").attr("src", "./image/greenBookNormal.png");
+            gameConfig.draggedElement = null;
+            gameConfig.draggedWord = null
+            return;
+          }
+          $("#wordNote").attr("src", "./image/greenBookNormal.png");
+          let tWord = wordFinished.findAndPick(wordStr);
+          wordBOOK.push(tWord);
+          if(gameConfig.previousViewCollection !== gameConfig.masterCollection)
+            gameConfig.previousViewCollection.push(tWord);
+          gameConfig.draggedElement.parentNode.removeChild(gameConfig.draggedElement);
+          gameConfig.draggedElement = null;
+          if(gameConfig.currentViewCollection.length() <= 0) {
+            hideListOfWords();
+            gameConfig.previousViewCollection.isCurrentViewCollection();
+            gameConfig.status = "wait";
+            countZoneControl("hide");
+
+            gameConfig.previousViewCollection = null;
+            $("#trashCanControl").html(`View Trash Can <span id="trashCount" class="label-mini-value">${wordFinished.length()}</span>`);
+            $("#trashCanControl")[0].onclick = function(){showTrashCan();};
+
+            $("#keyInput").val('');
+            $("#keyInput").attr('disabled', false);
+
+          }
+        } else {
+          //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+          if((gameConfig.draggedWord === null) || (gameConfig.draggedWord.score() < 0) || (gameConfig.draggedWord.exposed(true) <= 0) ) {
+            $("#trashCan").attr("src", "./image/trash_can_close_tightly.png");
+            gameConfig.draggedElement = null;
+            gameConfig.draggedWord = null
+            return;
+          }
+          $("#trashCan").attr("src", "./image/trash_can_close.png");
+          wordFinished.push(wordBOOK.findAndPick(wordStr));
+          $("#trashCanControl").show();
+          if(gameConfig.currentViewCollection !== gameConfig.masterCollection)
+            gameConfig.currentViewCollection.findAndPick(wordStr);
+          gameConfig.draggedElement.parentNode.removeChild(gameConfig.draggedElement);
+          gameConfig.draggedElement = null;
+          // if(dispType == "WT") {
+            $("tr.tableWordRow:odd").css("backgroundColor", "#c4fccd");
+            $("tr.tableWordRow:even").css("backgroundColor", "#dfffdf");
+          // }
+          if(gameConfig.currentViewCollection.length() <= 0) {
+            hideListOfWords();
+            clearGameCollections();
+            wordBOOK.isCurrentViewCollection();
+            gameConfig.status = "wait";
+            countZoneControl("hide");
+
+          }
+          //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        }
+      }
+      //===============================================================
       function collectionViewStyleIs(style = "WordList") {
         gameConfig.collectionViewStyle = style;
         showListOfWords();
@@ -1374,61 +1757,76 @@
       }
       function themeTitleFrom(collection) {
         _id("themeTitle").innerHTML = collection.title;
-        // $("#themeTitle").html(collection.title);
       }
-      //===============================================================
-      //===============================================================
+      function resizeLogo() {
+        let windowWidth = window.innerWidth;
+        let titleFontSize = gameConfig.referencePoint*window.innerWidth/gameConfig.referenceWidth;
+        let signFontSize = gameConfig.referenceTextPoint*window.innerWidth/gameConfig.referenceWidth;
+        let signMarginTop = 70*window.innerWidth/gameConfig.referenceWidth;
+        _id("logoTitle").style.fontSize = titleFontSize+"pt";
+        _id("developerSign").style.fontSize = signFontSize+"pt";
+        _id("developerSign").style.marginTop = signMarginTop+"px";
+      }
+      function starting() {
+        $("#startingPanel").fadeOut(500);
+
+        setTimeout(function(){
+          if(!getWordBOOKFromLocalStorage()) {
+            let wordBook = wordBook_2017_004; // <== from included js word book file.
+            wordBOOK.makeWordsFromWordBook(wordBook);
+          } else {
+            wordBook_2017_004 = null;
+            setTimeout(function(){$("#labelLocal").fadeIn(1000);}, 1500);
+          }
+          gameConfig.masterCollection = wordBOOK;
+          wordBOOK.isCurrentViewCollection();
+          gameConfig.lengthOfMaster = wordBOOK.length();
+          // themeTitleFrom(wordBOOK);
+          //----------------------------------------------------------------
+          wordBase.targetToFetchOutIs(wordKilled);
+          wordBase.targetForMissedIs(wordMissed);
+          //----------------------------------------------------------------
+          wordSource.targetToFetchOutIs(wordBase);
+          wordSource.showLength(_id('wordsWaiting'));
+          wordKilled.showLength(_id('wordsCatched'));
+          wordMissed.showLength(_id('wordsMissed'));
+          wordBOOK.showLength(_id('wordsTotal'));
+
+          $("#infoDiv").fadeIn(500);
+          $("#commandDiv").fadeIn(500);
+          $("#keyInput").focus();
+        }, 500); // end of setTimeout;
+        setTimeout(function() {
+          gameConfig.heightOfInfoDiv = $("#infoDiv").outerHeight(true);
+          gameConfig.heightOfDefenceBase = $(".defenceBase").outerHeight(true);
+          setHeightOfCollection();
+          gameConfig.startTop = $("#infoDiv").outerHeight(true)+15;
+          gameConfig.defenceBaseTop = $(".defenceBase").css("top").toNumber();
+        }, 650);
+      }
       //#######################################################################
       $(document).ready(function(){
-        gameConfig.heightOfInfoDiv = $("#infoDiv").outerHeight(true);
-        gameConfig.heightOfDefenceBase = $(".defenceBase").outerHeight(true);
-        setHeightOfCollection();
-
-        gameConfig.startTop = $("#infoDiv").outerHeight(true)+15;
-        // gameConfig.startTop = $("#infoDiv").css("top").toNumber() + $("#infoDiv").outerHeight(true)+15;
+        $(window).resize(resizeLogo);
+        $("#startingPanel").click(starting);
         setShowCollection(_id("collection"), _id("collectionTitle"), _id("collectionWords"));
         $(".memo").hide();
-
-        gameConfig.defenceBaseTop = $(".defenceBase").css("top").toNumber();
-
         $("#keyInput").keyup(inputControl);
-        //----------------------------------------------------------------
-        // wordSource.makeWordsFromString("DIT,Korea,USA,Japan,Hello");
-        let wordBook = wordBook_2017_004; // <== from included js word book file.
-        wordBOOK.makeWordsFromWordBook(wordBook);
-        gameConfig.masterCollection = wordBOOK;
-        wordBOOK.isCurrentViewCollection();
-        gameConfig.lengthOfMaster = wordBOOK.length();
-        // themeTitleFrom(wordBOOK);
-        //----------------------------------------------------------------
-        wordBase.targetToFetchOutIs(wordKilled);
-        wordBase.targetForMissedIs(wordMissed);
-        //----------------------------------------------------------------
-        wordSource.targetToFetchOutIs(wordBase);
-        // wordBOOK.showLengthWith(document.getElementById('wordsTotal'));
-        wordBOOK.showLength();
-        wordSource.showLengthWith(document.getElementById('wordsWaiting'));
-        wordKilled.showLengthWith(document.getElementById('wordsCatched'));
-        wordMissed.showLengthWith(document.getElementById('wordsMissed'));
-
         $("#wordListTip").hide();
-        $("#infoDiv").fadeIn(1500);
-        $("#commandDiv").fadeIn(1500);
-        $("#keyInput").focus();
 
-        // gameConfig.currentTest = new Test(wordBOOK, 2);
-        // gameConfig.currentTest.startTest();
+        resizeLogo();
+        $("#startingPanel").fadeIn(1000);
         //#######################################################################
       });
     </script>
   </head>
-  <body >
+  <body onunload="saveWordBOOKToLocalStorage();">
     <!-- ============================================================== -->
     <div style="display:none;" class="psho-container psho-shadow-default" id="infoDiv">
       <table width=100%>
         <tr>
           <td style="width: 200px;">
             <div class="psho-label-title frederikaTheGreat" id="appTitle">Word Practice</div>
+            <div class="nanumGothicCoding miniLabel" id="labelLocal">local</div>
           </td>
           <td style="text-align:left;">
                 <span class="bander-navy label-head nanumGothic" id="themeTitle" onclick="showListOfWords();">Theme Title</span>&nbsp;&nbsp;&nbsp;
@@ -1473,21 +1871,39 @@
 
     <!-- ============================================================== -->
     <div id="collection">
-      <div id="collectionTitleArea">
+      <div id="collectionTitleArea" >
         <table>
           <tr>
-            <td style="vertical-align: middle;">
+            <td style="vertical-align: middle;"  >
               <button class="nanumGothic" id="btnHideThisCollection" title="Close word list view." onclick="hideListOfWords();"> X </button>
               <button class="nanumGothic" id="btnWordList" onclick="collectionViewStyleIs();">Word Only</button>
               <button class="nanumGothic" id="btnWordBook" onclick="collectionViewStyleIs('WordBook');">Word Book</button>
             </td>
-            <td>
-              <div id="collectionTitle"></div>
+            <td style="vertical-align: middle;">
+              <button class="nanumGothic" id="trashCanControl" onclick="showTrashCan();">View Trash Can</button>
+            </td>
+            <td style="vertical-align: middle;">
+              <div id="collectionTitle">
+              </div>
             </td>
           </tr>
         </table>
       </div>
       <div id="collectionWords"></div>
+    </div>
+    <!-- ============================================================== -->
+    <div class="logoContainer" id="startingPanel" style="display:none;">
+      <div class="logoText">
+        <div class="frederikaTheGreat" style="font-size:60pt;" id="logoTitle">
+          Word Practice
+        </div>
+        <hr width=70% />
+        <div id="developerSign" class="nanmumGothic" style="margin-top: 70px; font-size: 20pt; text-align: center; bottom: 0;">
+          Developed by Pongsik, Ho<br />
+          Dept. of Computer Information, DIT<br />
+          Copyright(c) 2017. All rights reserved.
+        </div>
+      </div>
     </div>
     <!-- ============================================================== -->
     <div class='memo'> <div class='memoTitle'></div> <div class='memoBody nanumMyeongjo'></div></div>
@@ -1514,10 +1930,13 @@
             </span>
           </td>
           <td class="nanumGothic" style="font-size: 7pt; text-align:right;">
-            Designed by Pongsik, Ho. Dept. of Computer Information, DIT. <br />Copyright(c) 2017 All rights reserved.
+            Designed by Pongsik, Ho. Dept. of Computer Information, DIT.<br />Copyright(c) 2017 All rights reserved.<br />
+            Version:[171220.1]
           </td>
         </tr>
       </table>
     </div>
+    <img style="display:none;" id="trashCan" src="./image/trash_can_close.PNG" ondragenter="dragEnter(event);" ondragleave="dragLeave(event);" ondrop="dragDrop(event);" ondragover="dragAllowDrop(event);"/>
+    <img style="display:none;" id="wordNote" src="./image/greenBookNormal.PNG" ondragenter="dragEnter(event);" ondragleave="dragLeave(event);" ondrop="dragDrop(event);" ondragover="dragAllowDrop(event);"/>
   </body>
 </html>
