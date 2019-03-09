@@ -9,6 +9,7 @@
       @import url(http://fonts.googleapis.com/earlyaccess/nanumgothic.css);
       @import url(http://fonts.googleapis.com/earlyaccess/nanummyeongjo.css);
       @import url(http://fonts.googleapis.com/earlyaccess/nanumgothiccoding.css);
+      @import url('https://fonts.googleapis.com/css?family=Source+Code+Pro');
       .nanumGothic {
         font-family: 'Nanum Gothic', sans-serif;
       }
@@ -20,6 +21,9 @@
       }
       .frederikaTheGreat {
         font-family: 'Fredericka the Great', cursive;
+      }
+      .scpro {
+        font-family: 'Source Code Pro', monospace;
       }
       body {
         /*background-color: #E7F7D4;*/
@@ -177,14 +181,14 @@
         font-size: 10pt;
       }
       /*#################### psho-css ###################*/
-      button {
+      button.btnWP {
         border-radius: 5px;
-        background-color: #6e6e6e;
-        color: white;
+        background-color: #010ca4;
+        color: #ffed00;
         padding: 5px;
       }
-      button:hover {
-        background-color: #010ca4;
+      button.btnWP:hover {
+        background-color: #055bdb;
         color: #ffed00;
       }
       div.psho-container {
@@ -413,6 +417,22 @@
       .show {
         display: block
       }
+      .litem {
+        border: 1px solid gray;
+        padding: 3px;
+        border-top-left-radius: 6px;
+        border-bottom-right-radius: 6px;
+        background-color: #f9cb9c;
+      }
+      li {margin-bottom: 7px;}
+      .codeKey {
+        border: 1px solid gray;
+        background-color: #e9e9e9;
+        border-radius: 3px;
+        padding-left: 3px;
+        padding-right: 3px;
+        font-family: 'Source Code Pro', monospace;
+      }
     </style>
 
     <script src="jquery-3.2.1.min.js"></script>
@@ -484,7 +504,7 @@
         "masterCollection":       null,
         "referenceWidth":         1900,
         "referencePoint":         60,
-        "referenceTextPoint":     20,
+        "referenceTextPoint":     15,
         "draggedElement":         null,
         "draggedWord":            null,
         "currentEditTR":          null,
@@ -1049,7 +1069,7 @@
       Test.prototype.length = function() {
         return this.problems.length;
       }
-      Test.prototype.showAProblem = function(problemIndex) {
+      Test.prototype.showAProblem = function(problemIndex=gameConfig.currentTest.currentIndex) {
         this.currentProblem = this.problems[problemIndex];
         this.currentIndex = problemIndex;
         let problem = this.currentProblem;
@@ -1106,7 +1126,8 @@
         gameConfig.status = "wait";
         _id("btnTestControl").innerHTML = "Start Test";
         _id("btnTestControl").onclick = function(){testStart();};
-        $("#btnGameControl").show();
+        _id("btnGameControl").style.visibility = "visible";
+        _id("btnViewControl").style.visibility = "visible";
       }
       Test.prototype.typeIs = function(type) {
         this.type = type;
@@ -1238,7 +1259,7 @@
             if((ct.current()+1) >= ct.length()) //in case of last problem
               setTimeout(function(){gameConfig.currentTest.showNextProblem();}, gameConfig.testInterval);
             else
-              $("#testQuestion").append("&nbsp;&nbsp;<button id='btnNextProblem' onclick='gameConfig.currentTest.showNextProblem();'>Next Problem</button>");
+              $("#testQuestion").append("&nbsp;&nbsp;<button class='btnWP' id='btnNextProblem' onclick='gameConfig.currentTest.showNextProblem();'>Next Problem</button>");
           } else {
             cp.wasHit = true;
             setTimeout(function(){gameConfig.currentTest.showNextProblem();}, gameConfig.testInterval);
@@ -1259,13 +1280,28 @@
         gameConfig.currentViewCollection.showListOfWords(gameConfig.collectionViewStyle);
         gameConfig.status = "view";
         _id("themeTitle").onclick = function(){hideListOfWords();};
+        _id("btnViewControl").innerHTML = "Hide Words";
+        _id("btnViewControl").onclick = function(){hideListOfWords()};
+        _id("btnTestControl").style.visibility = "hidden";
+        _id("btnGameControl").style.visibility = "hidden";
         $("#keyInput").focus();
       }
       function hideListOfWords() {
         _id("themeTitle").onclick = function(){showListOfWords();};
         gameConfig.status = "wait";
         $("#collection").fadeOut(200);
-        $("#keyInput").val('');
+
+        if(gameConfig.currentViewCollection != wordFinished)
+          $("#keyInput").val('');
+
+        _id("btnViewControl").innerHTML = "View Words";
+        _id("btnViewControl").onclick = function(){showListOfWords()};
+
+        if(gameConfig.currentViewCollection != wordFinished) {
+          _id("btnTestControl").style.visibility = "visible";
+          _id("btnGameControl").style.visibility = "visible";
+        }
+
         $("#keyInput").focus();
       }
       //===============================================================
@@ -1371,6 +1407,10 @@
         $("#trashCanControl")[0].onclick = function(){hideTrashCan();};
 
         $("#keyInput").val('Close trash can first~!');
+
+        _id("btnGameControl").style.visibility = "hidden";
+        _id("btnTestControl").style.visibility = "hidden";
+
         $("#keyInput").attr('disabled', true);
       }
       function hideTrashCan() {
@@ -1381,6 +1421,10 @@
         $("#trashCanControl")[0].onclick = function(){showTrashCan();};
 
         $("#keyInput").val('');
+
+        _id("btnGameControl").style.visibility = "visible";
+        _id("btnTestControl").style.visibility = "visible";
+
         $("#keyInput").attr('disabled', false);
         $("#keyInput").focus();
 
@@ -1411,7 +1455,8 @@
         }
         _id("btnGameControl").innerHTML = "Stop Game";
         _id("btnGameControl").onclick = function(){gameStop()};
-        $("#btnTestControl").hide();
+        _id("btnTestControl").style.visibility = "hidden";
+        _id("btnViewControl").style.visibility = "hidden";
         $("#keyInput").focus();
       }
       function gameStop() {
@@ -1424,7 +1469,8 @@
           countZoneControl("hide");
           _id("btnGameControl").innerHTML = "Start Game";
           _id("btnGameControl").onclick = function(){gameStart()};
-          $("#btnTestControl").show();
+          _id("btnTestControl").style.visibility = "visible";
+          _id("btnViewControl").style.visibility = "visible";
           $("#keyInput").focus();
         }
       }
@@ -1445,8 +1491,13 @@
         gameConfig.status = "wait";
       }
       function testStart(cmds1) {
-        if(gameConfig.status === "game" || gameConfig.status === "test")
+        if(gameConfig.status === "game" || gameConfig.status === "test") {
+          if(cmds1) {
+            gameConfig.currentTest.type = cmds1;
+            gameConfig.currentTest.showAProblem();
+          }
           return;
+        }
         if(gameConfig.status === "view")
           hideListOfWords();
         if(gameConfig.currentTest === null) {
@@ -1457,7 +1508,8 @@
             gameConfig.currentTest.startTest(cmds1);
             _id("btnTestControl").innerHTML = "Stop Test";
             _id("btnTestControl").onclick = function(){testStop();};
-            $("#btnGameControl").hide();
+            _id("btnGameControl").style.visibility = "hidden";
+            _id("btnViewControl").style.visibility = "hidden";
             return;
           } else {
             return;
@@ -1465,7 +1517,8 @@
         } else {
           _id("btnTestControl").innerHTML = "Stop Test";
           _id("btnTestControl").onclick = function(){testStop();};
-          $("#btnGameControl").hide();
+          _id("btnGameControl").style.visibility = "hidden";
+          _id("btnViewControl").style.visibility = "hidden";
           gameConfig.currentTest.startTest(cmds1);
         }
       }
@@ -1474,7 +1527,8 @@
           gameConfig.currentTest.suspendTest();
           _id("btnTestControl").innerHTML = "Start Test";
           _id("btnTestControl").onclick = function(){testStart();};
-          $("#btnGameControl").show();
+          _id("btnGameControl").style.visibility = "visible";
+          _id("btnViewControl").style.visibility = "visible";
         }
       }
       function commandControl(cmd) {
@@ -1520,7 +1574,7 @@
                       $("#keyInput").focus();
                       break;
           case "t": case "ㅅ": case "test":
-                      testStart();
+                      testStart(cmds[1]);
                       break;
           case "s": case "ㄴ": case "stop":
                       // if(gameConfig.status === "game") {
@@ -1636,6 +1690,7 @@
         _id("helpInfo").style.display = "block";
         _id("helpInfo").onclick = function(){$("#keyInput").focus();};
         gameConfig.helpInfoStatus = true;
+        _id("keyInput").focus();
         return true;
       }
       function hideHelpInfo() {
@@ -1645,6 +1700,7 @@
         gameConfig.helpInfoStatus = false;
         if(gameConfig.status === "game")
           gameControl("go");
+        _id("keyInput").focus();
         return false;
       }
       function inputControl() {
@@ -1802,6 +1858,7 @@
 
             $("#keyInput").val('');
             $("#keyInput").attr('disabled', false);
+            $("#keyInput").focus();
 
           }
         } else {
@@ -1865,7 +1922,7 @@
         let windowWidth = window.innerWidth;
         let titleFontSize = gameConfig.referencePoint*window.innerWidth/gameConfig.referenceWidth;
         let signFontSize = gameConfig.referenceTextPoint*window.innerWidth/gameConfig.referenceWidth;
-        let signMarginTop = 70*window.innerWidth/gameConfig.referenceWidth;
+        let signMarginTop = 50*window.innerWidth/gameConfig.referenceWidth;
         _id("logoTitle").style.fontSize = titleFontSize+"pt";
         _id("developerSign").style.fontSize = signFontSize+"pt";
         _id("developerSign").style.marginTop = signMarginTop+"px";
@@ -1898,14 +1955,27 @@
           $("#infoDiv").fadeIn(500);
           $("#commandDiv").fadeIn(500);
           $("#keyInput").focus();
-        }, 500); // end of setTimeout;
+        }, 300); // end of setTimeout;
         setTimeout(function() {
           gameConfig.heightOfInfoDiv = $("#infoDiv").outerHeight(true);
           gameConfig.heightOfDefenceBase = $(".defenceBase").outerHeight(true);
           setHeightOfCollection();
           gameConfig.startTop = $("#infoDiv").outerHeight(true)+15;
           gameConfig.defenceBaseTop = $(".defenceBase").css("top").toNumber();
-        }, 650);
+        }, 450);
+      }
+      function openInfoTab(evt, tabId="wpInfoIntro") {
+        var i, x, tablinks;
+        x = document.getElementsByClassName("wpGuide");
+        for (i = 0; i < x.length; i++) {
+            x[i].style.display = "none";
+        }
+        tablinks = document.getElementsByClassName("tablink");
+        for (i = 0; i < x.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" w3-indigo", "");
+        }
+        document.getElementById(tabId).style.display = "block";
+        evt.currentTarget.className += " w3-indigo";
       }
       //#######################################################################
       $(document).ready(function(){
@@ -1928,7 +1998,7 @@
       <table width=100%>
         <tr>
           <td style="width: 200px;">
-            <div class="psho-label-title frederikaTheGreat" id="appTitle">Word Practice</div>
+            <div class="psho-label-title frederikaTheGreat" id="appTitle" onclick="showHelpInfo()">Word Practice</div>
             <div class="nanumGothicCoding miniLabel" id="labelLocal">local</div>
           </td>
           <td style="text-align:left;">
@@ -1936,8 +2006,9 @@
                 <span class="label-head">Total:<span class="label-value" id="wordsTotal">0</span> words</span>
           </td>
           <td style="text-align:left;">
-            <button id="btnGameControl" onclick="gameStart();" class="nanumgothic">Start Game</button>
-            <button id="btnTestControl" onclick="testStart();" class="nanumgothic">Start Test</button>
+            <button class='btnWP' id="btnViewControl" onclick="showListOfWords();" class="nanumgothic">View Words</button>
+            <button class='btnWP' id="btnGameControl" onclick="gameStart();" class="nanumgothic">Start Game</button>
+            <button class='btnWP' id="btnTestControl" onclick="testStart();" class="nanumgothic">Start Test</button>
           </td>
           <td style="text-align: right; width: 350px;">
             <div id="countZone" style="display:none;">
@@ -1965,7 +2036,7 @@
           <tr>
             <td>Problem: <span class="label-value" id="currentTurn"></span> of <span class="label-value-off" id="totalProblems"></span> </td>
             <td width="50%" id="testTitle"></td>
-            <td><button style="float: right;" id='btnQuitTest' onclick='gameConfig.currentTest.suspendTest();'>Stop Test</button></td>
+            <!-- <td><button class='btnWP' style="float: right;" id='btnQuitTest' onclick='gameConfig.currentTest.suspendTest();'>Stop Test</button></td> -->
           </tr>
         </table>
       </div>
@@ -1975,28 +2046,112 @@
       </div>
     </div>
     <!-- =======================^^^ Test Area Design ^^^======================= -->
-    <div id="helpInfo" class="w3-modal w3-round">
-      <div class="w3-modal-content w3-round">
+    <div id="helpInfo" class="w3-modal ">
+      <div class="w3-modal-content ">
         <header class="frederikaTheGreat w3-container w3-teal ">
           <span onclick="hideHelpInfo();"
           class="w3-button w3-xlarge w3-display-topright w3-round">&times;</span>
-          <h2 class="frederikaTheGreat">Word Practice Commands</h2>
+          <h2 class="nanumGothic">How to use <span class="frederikaTheGreat">Word Practice</span></h2>
         </header>
-        <div class="w3-container nanumGothic" style="max-height: 400px; overflow: scroll;">
-          <p class="w3-border-bottom" style="position: sticky; top: 0; background-color:white;"><span class="w3-tag w3-xlarge frederikaTheGreat w3-white">Word Practice</span> <span class="w3-tag w3-blue">명령</span>은 <span class="w3-tag w3-yellow">'<b>/</b>'</span>로 시작합니다. 다음은 사용 가능한 명령의 예를 보여줍니다.</p>
-          <p><span class="w3-tag nanumGothicCoding w3-black"><b>Pick</b></span>:<span class="w3-tag w3-blue"><b> /p ~ 20</b></span> 마스터 단어장에서 임의로 <span class="w3-tag w3-yellow"> 20 </span>개를 선택하여 가져옵니다.</p>
-          <p><span class="w3-tag nanumGothicCoding w3-black"><b>Pick</b></span>:<span class="w3-tag w3-blue"><b> /p ab</b></span> 마스터 단어장에서 <span class="w3-tag w3-yellow"> ab </span>로 시작하는 단어들을 모두 선택하여 가져옵니다.</p>
-          <p><span class="w3-tag nanumGothicCoding w3-black"><b>Drop</b></span>:<span class="w3-tag w3-blue"><b> /d </b></span> <span class="w3-tag w3-yellow"> /p </span>로 선택한 단어를 해제합니다. 해제 후에는 마스터 단어장으로 돌아갑니다.</p>
-          <p><span class="w3-tag nanumGothicCoding w3-black"><b>Test</b></span>:<span class="w3-tag w3-blue"><b> /t </b></span> 선택한 단어장(또는 마스터 단어장)으로 단어 테스트를 시작합니다. (같은 기능:<span class="w3-tag w3-round w3-indigo">Start Test</span>)</p>
-          <p><span class="w3-tag nanumGothicCoding w3-black"><b>Game</b></span>:<span class="w3-tag w3-blue"><b> /g </b></span> 선택한 단어장(또는 마스터 단어장)으로 단어 게임(산성비)을 시작합니다. (같은 기능:<span class="w3-tag w3-round w3-indigo">Start Game</span>)</p>
-          <p><span class="w3-tag nanumGothicCoding w3-black"><b>Stop</b></span>:<span class="w3-tag w3-blue"><b> /s </b></span> 진행 중인 단어 게임의 단어 이동을 멈춥니다. 계속하려면 <span class="w3-tag w3-yellow"> /g </span>를 입력합니다.</p>
-          <p><span class="w3-tag nanumGothicCoding w3-black"><b>Quit</b></span>:<span class="w3-tag w3-blue"><b> /q </b></span> 진행 중인 단어 테스트 또는 단어 게임을 중단합니다. 중단된 게임이나 테스트를 계속하려면 <span class="w3-tag w3-yellow"> /g </span>,
-            <span class="w3-tag w3-yellow"> /t </span>를 입력합니다.</p>
-          <p><span class="w3-tag nanumGothicCoding w3-black"><b>View</b></span>:<span class="w3-tag w3-blue"><b> /v </b></span> 선택한 단어장(또는 마스터 단어장)의 단어 목록을 보여줍니다.</p>
-          <p><span class="w3-tag nanumGothicCoding w3-black"><b>Hide</b></span>:<span class="w3-tag w3-blue"><b> /h </b></span> 단어 목록 보기를 해제합니다.</p>
+        <div class="w3-container nanumGothic" style="padding:0px; max-height: 450px; overflow: scroll;">
+        <!-- ################# TAB Help Information #############################  -->
+          <div class="w3-bar w3-cyan" style="width:100%; position:sticky; top: 0;">
+            <button class="w3-bar-item nanumGothic w3-button tablink w3-indigo" onclick="openInfoTab(event,'wpInfoIntro')">Intro</button>
+            <button class="w3-bar-item nanumGothic w3-button tablink" onclick="openInfoTab(event,'wpInfoCommand')">Command</button>
+            <button class="w3-bar-item nanumGothic w3-button tablink" onclick="openInfoTab(event,'wpInfoPickDrop')">Pick &amp; Drop</button>
+            <button class="w3-bar-item nanumGothic w3-button tablink" onclick="openInfoTab(event,'wpInfoView')">View</button>
+            <button class="w3-bar-item nanumGothic w3-button tablink" onclick="openInfoTab(event,'wpInfoGame')">Game</button>
+            <button class="w3-bar-item nanumGothic w3-button tablink" onclick="openInfoTab(event,'wpInfoTest')">Test</button>
+          </div>
+          <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~ TAB Contents Start VV ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+          <div id="wpInfoIntro" class="w3-container w3-border wpGuide">
+            <h2>Intro.</h2>
+            <p class="nanumGothic"><img src="./image/wpoverview.png" style="float:right;" width=400px/>
+              <span class="frederikaTheGreat">Word Practice</span>는 영어 단어 학습을 돕기 위해 개발되었습니다. <br>
+              프로그램의 기능은 다음 세 개로 구성됩니다.<br />
+              <ul class="nanumGothic">
+                <li><span class="litem scpro"><b>V</b>iew</span>: 단어장 단어 목록 보기 (기본 단어장 또는 선택 단어장) </li>
+                <li><span class="litem scpro"><b>G</b>ame</span>: 기본 또는 선택 단어장으로 게임하기 </li>
+                <li><span class="litem scpro"><b>T</b>est</span>: 기본 또는 선택 단어장으로 단어 테스트 하기 </li>
+              </ul>
+              기본 단어장에서 일부 단어를 선택하여 생성한 선택 단어장으로도 View, Game, Test를 진행할 수 있습니다.<br />
+              선택 단어장은 언제든지 취소하고 기본 단어장으로 돌아갈 수 있습니다.
+              <ul class="nanumGothic">
+                <li><span style="background-color: #ffe599;" class="litem scpro"><b>P</b>ick</span>: 기본 단어장에서 단어 선택하기 </li>
+                <li><span style="background-color: #ffe599;" class="litem scpro"><b>D</b>rop</span>: 선택 단어장 취소하고 기본 단어장으로 돌아가기</li>
+              </ul>
+            </p>
+
+          </div>
+          <!-- Word and Command -->
+          <div id="wpInfoCommand" class="w3-container w3-border wpGuide" style="display:none">
+            <h2>Command</h2>
+            <div class="w3-border-bottom" ><span class="w3-tag w3-large frederikaTheGreat w3-white">Word Practice</span>에서 단어와 <span class="w3-tag w3-blue">명령</span>은 화면 하단의 Input에 입력합니다.<img src="./image/wpInput.png" style="display:inline-block;width: 250px;" /> </div>
+            <ul class="nanumGothic">
+              <li><b>단어 입력</b></li>: 게임에서는 내려오는 단어를, 단어장 보기에서 검색어를 입력합니다.<img src="./image/wpInputWord.png" style="display:inline-block; width: 250px;" /><br />
+                        : 단어 입력은 <span class="codeKey">ENTER</span> 또는 <span class="codeKey">SPACE</span>로 확인합니다.<br /><br />
+              <li><b>명령 입력</b></li>: 모든 <span class="w3-tag w3-blue">명령</span>은 <span class="codeKey">/</span>로 시작합니다.<img src="./image/wpInputCommand.png" style="display:inline-block;width: 250px;" /><br />
+                        : 명령을 입력할 때는 입력란이 분홍색으로 바뀝니다.
+            </ul>
+          </div>
+          <!-- Pick & Drop -->
+          <div id="wpInfoPickDrop" class="w3-container w3-border wpGuide" style="display:none">
+            <h2>Pick &amp; Drop</h2>
+            <p ><span class="w3-large frederikaTheGreat w3-white">Word Practice</span>는 미리 설정된 단어장 또는 브라우저에 저장된 단어장(<img src="./image/local.png" height=20px /> 표시됨)을 선택하여 기본 단어장으로 사용합니다.</p>
+            <p>기본 단어장에서 <span class="codeKey">/p</span> 명령으로 일부 단어들을 뽑아 생성한 선택 단어장으로 단어 연습(View, Game, Test)을 진행할 수 있습니다.</p>
+            <p>선택 단어장은 <span class="codeKey">/d</span> 명령으로 해제하고 기본 단어장으로 돌아갈 수 있습니다.</p><hr />
+
+            <p><span class="w3-tag scpro w3-gray"><b><span style="color:white;">P</span>ick</b></span>:<span class="codeKey"><b>/p</b></span> 검색할 단어를 입력하는 창으로 연결됩니다. (빈 칸을 입력하면 전체 단어가 선택됩니다.)</p>
+            <p><span class="w3-tag scpro w3-gray"><b><span style="color:white;">P</span>ick</b></span>:<span class="codeKey"><b>/p ~ 20</b></span> 기본 단어장에서 임의로 <span class="w3-tag w3-yellow"> 20 </span>개를 추출하여 선택 단어장으로 설정합니다.</p>
+            <p><span class="w3-tag scpro w3-gray"><b><span style="color:white;">P</span>ick</b></span>:<span class="codeKey"><b>/p ab</b></span> 기본 단어장에서 <span class="w3-tag w3-yellow"> ab </span>로 시작하는 단어들을 모두 선택 단어장으로 설정합니다.</p>
+            <p><span class="w3-tag scpro w3-gray"><b><span style="color:white;">D</span>rop</b></span>:<span class="codeKey"><b>/d</b></span> 선택 단어장을 해제합니다. 해제 후에는 기본 단어장으로 돌아갑니다.</p>
+          </div>
+          <!-- View -->
+          <div id="wpInfoView" class="w3-container w3-border wpGuide" style="display:none">
+            <h2>View</h2>
+            <p class="nanumGothic">현재 단어장(기본 단어장 또는 선택 단어장)의 단어들을 두 가지 방식(<img src="./image/btnWordOnly.png" height=25px />, <img src="./image/btnWordBook.png" height=25px />)로 보여줍니다.</p><hr />
+            <p><span class="w3-tag scpro w3-gray"><b><span style="color:white;">V</span>iew</b></span>:<span class="codeKey"><b>/v</b></span> 현재 단어장의 단어 목록을 보여줍니다. 화면 상단의 버튼 <img src="./image/btnViewWords.png" height=25px />으로도 볼 수 있습니다.</p>
+            <p><span class="w3-tag scpro w3-gray"><b><span style="color:white;">H</span>ide</b></span>:<span class="codeKey"><b>/h</b></span> 단어장 보기를 중단합니다. 화면 상단의 버튼 <img src="./image/btnHideWords.png" height=25px />으로도 보기 화면이 종료됩니다.</p>
+            <p onclick="$('#imgViewWordOnly').slideToggle(600);"><span class="codeKey" style="background-color:#DDFFDD;">⇣</span> <span class="w3-tag scpro w3-gray"><b>View</b></span> <img src="./image/btnWordOnly.png" height=25px />: 현재 단어장의 단어만 목록으로 보여줍니다. (단어를 클릭하면 발음기호, 의미가 표시됩니다.)</p>
+            <img onclick="$(this).slideToggle(600);" id="imgViewWordOnly" src="./image/wordList.png" width=800px style="float: center; display:none;"/>
+            <p onclick="$('#imgViewWordBook').slideToggle(600);"><span class="codeKey" style="background-color:#DDFFDD;">⇣</span> <span class="w3-tag scpro w3-gray"><b>View</b></span> <img src="./image/btnWordBook.png" height=25px />: 단어, 발음기호, 의미를 보여줍니다. (의미가 ?로 된 단어는 한 번 클릭하면 계속 보이게 됩니다.)</p>
+            <img onclick="$(this).slideToggle(600);" id="imgViewWordBook" src="./image/wordBook.png" width=800px style="float: center; display:none;"/>
+            <p onclick="$('#imgViewWordBookEdit').slideToggle(600);"><span class="codeKey" style="background-color:#DDFFDD;">⇣</span> <span class="w3-tag scpro w3-gray"><b>View Edit</b></span>  <img src="./image/btnWordBook.png" height=25px />: 보기에서 단어를 포함하는 행을 <span class="codeKey"><b>Double Click</b></span>하면 의미를 수정, 편집 가능합니다.</p>
+            <img onclick="$(this).slideToggle(600);" id="imgViewWordBookEdit" src="./image/wordBookEdit.png" width=800px style="float: center; display:none;"/>
+          </div>
+
+          <!-- Game -->
+          <div id="wpInfoGame" class="w3-container w3-border wpGuide" style="display:none">
+            <h2>Game</h2>
+            <p>현재 단어장의 단어들이 임의의 순서로 화면 상단에서 차례로 내려오면 단어를 입력하여 제거하는 일명 산성비 게임입니다.</p><hr />
+            <p><span class="w3-tag scpro w3-gray"><b><span style="color:white;">G</span>ame</b></span>:<span class="codeKey"><b>/g</b></span> 게임을 시작합니다. 화면 상단의 버튼 <img src="./image/btnStartGame.png" height=25px />으로도 시작할 수 있습니다.</p>
+            <p><span class="w3-tag scpro w3-gray"><b><span style="color:white;">Q</span>uit</b></span>:<span class="codeKey"><b>/q</b></span> 게임을 중단합니다. 화면 상단의 버튼 <img src="./image/btnStopGame.png" height=25px />으로도 중단할 수 있습니다.</p>
+            <p><span class="w3-tag scpro w3-gray"><b><span style="color:white;">S</span>top</b></span>:<span class="codeKey"><b>/s</b></span> 단어들의 이동을 중단합니다. 이 상태에서도 단어를 입력하여 제거할 수 있습니다. <span class="codeKey"><b>/g</b></span>로 다시 이동하게 합니다. </p>
+            <p><span class="w3-tag scpro w3-gray"><b><span style="color:white;">M</span>emo</b></span>:<span class="codeKey"><b>/m</b></span> 단어가 제거될 때, 발음기호와 의미를 표시하는 기능을 켭니다. 이 기능 해제할 때도 <span class="codeKey"><b>/m</b></span> 명령을 사용합니다. </p>
+            <p><span class="w3-tag scpro w3-gray"><b>speed</b></span>: 단어의 하강 속도를 조절할 수 있습니다. <span class="codeKey"><b>/fast</b></span>: 0.2초 빨라집니다. <span class="codeKey"><b>/slow</b></span>: 0.2초 느려집니다. </p>
+            <p><span class="w3-tag scpro w3-gray"><b>SPACE</b></span>: <span class="codeKey"><b>/space</b></span> SPACE 키 입력을 ENTER 입력과 같은 의미로 처리하는 기능을 설정하거나 해제합니다.</p>
+
+          </div>
+
+          <!-- Test -->
+          <div id="wpInfoTest" class="w3-container w3-border wpGuide" style="display:none">
+            <h2>Test</h2>
+            <p>현재 단어장의 단어 테스트를 다음 두 가지 방식으로 진행할 수 있습니다.</p>
+            <p><span class="w3-tag w3-yellow">단어 모드</span>: 제시된 단어에 알맞은 뜻을 보기에서 고르는 형식   <span class="w3-tag w3-yellow">의미모드</span>: 제시된 의미에 맞는 단어를 보기에서 고르는 형식</p>
+            <p><span class="w3-tag w3-blue">문제 풀기</span>: 제시된 보기에서 하나를 선택합니다. 결과는 바로 표시됩니다. 정답이 선택될 때까지 계속 선택해야 합니다. </p>
+            <p><span class="w3-tag w3-blue">문제 진행</span>: 한 번에 맞추면 다음 문제로 자동 진행됩니다. 오답을 한 번 이상 고른 경우에는 <img src="./image/btnNextProblem.png" height=25px />을 클릭해야만 합니다. </p>
+            <hr />
+            <p><span class="w3-tag scpro w3-gray"><b><span style="color:white;">T</span>est</b></span>:<span class="codeKey"><b>/t</b></span> 단어 테스트를 시작합니다. 화면 상단의 버튼 <img src="./image/btnStartTest.png" height=25px />으로도 시작할 수 있습니다.</p>
+            <p><span class="w3-tag scpro w3-gray"><b><span style="color:white;">Q</span>uit</b></span>:<span class="codeKey"><b>/q</b></span> 단어 테스트를 중단합니다. 화면 상단의 버튼 <img src="./image/btnStopTest.png" height=25px />으로도 중단할 수 있습니다.</p>
+            <p><span class="w3-tag scpro w3-gray"><b>단어 모드 설정</b></span>: <span class="codeKey"><b>/t word</b></span>: 단어 모드로 설정합니다.</p>
+            <p><span class="w3-tag scpro w3-gray"><b>의미 모드 설정</b></span>: <span class="codeKey"><b>/t memo</b></span>: 의미 모드로 설정합니다.</p>
+
+          </div>
+          <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~ TAB Contents End ^^ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+        <!-- ################# TAB Help Information #############################  -->
         </div>
         <footer class="w3-container w3-teal ">
-          <p>Modal Footer</p>
+          <p>Designed by Pongsik, Ho. / pshonature@gmail.com /  Dept. of Computer Information, DIT</p>
         </footer>
       </div>
     </div>
@@ -2006,12 +2161,12 @@
         <table>
           <tr>
             <td style="vertical-align: middle;"  >
-              <button class="nanumGothic" id="btnHideThisCollection" title="Close word list view." onclick="hideListOfWords();"> X </button>
-              <button class="nanumGothic" id="btnWordList" onclick="collectionViewStyleIs();">Word Only</button>
-              <button class="nanumGothic" id="btnWordBook" onclick="collectionViewStyleIs('WordBook');">Word Book</button>
+              <button class="nanumGothic btnWP" id="btnHideThisCollection" title="Close word list view." onclick="hideListOfWords();"> X </button>
+              <button class="nanumGothic btnWP" id="btnWordList" onclick="collectionViewStyleIs();">Word Only</button>
+              <button class="nanumGothic btnWP" id="btnWordBook" onclick="collectionViewStyleIs('WordBook');">Word Book</button>
             </td>
             <td style="vertical-align: middle;">
-              <button class="nanumGothic" id="trashCanControl" onclick="showTrashCan();">View Trash Can</button>
+              <button class="nanumGothic btnWP" id="trashCanControl" onclick="showTrashCan();">View Trash Can <span id="trashCount" class="label-mini-value"></span></button>
             </td>
             <td style="vertical-align: middle;">
               <div id="collectionTitle">
@@ -2025,14 +2180,12 @@
     <!-- ============================================================== -->
     <div class="logoContainer" id="startingPanel" style="display:none;">
       <div class="logoText">
-        <div class="frederikaTheGreat" style="font-size:60pt;" id="logoTitle">
-          Word Practice
-        </div>
+        <div class="frederikaTheGreat" style="font-size:10%;" id="logoTitle">Word Practice</div>
         <hr width=70% style="margin-left:auto; margin-right: auto;" />
-        <div id="developerSign" class="nanmumGothic" style="margin-top: 70px; font-size: 20pt; text-align: center; bottom: 0;">
+        <div id="developerSign" class="nanmumGothic" style="margin-top: 50px; font-size: 15pt; text-align: center; bottom: 0;">
           Developed by Pongsik, Ho<br />
           Dept. of Computer Information, DIT<br />
-          Copyright(c) 2017. All rights reserved.
+          Copyright(c) 2017-2018. All rights reserved.
         </div>
       </div>
     </div>
@@ -2061,8 +2214,8 @@
             </span>
           </td>
           <td class="nanumGothic" style="font-size: 7pt; text-align:right;">
-            Designed by Pongsik, Ho. Dept. of Computer Information, DIT.<br />Copyright(c) 2017 All rights reserved.<br />
-            Version:[171220.1]
+            Designed by Pongsik, Ho. Dept. of Computer Information, DIT.<br />Copyright(c) 2017-2018 All rights reserved.<br />
+            Version:[180101.1]
           </td>
         </tr>
       </table>
