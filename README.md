@@ -1,3 +1,2 @@
 # Word Practice
--github에 push후 README 변경
--github에서 README 변경
+-2023. 11. 16. 오전 최종 버전으로 업데이트
